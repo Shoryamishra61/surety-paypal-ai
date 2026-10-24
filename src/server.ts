@@ -16,6 +16,9 @@ import {
 } from './providers/paypal';
 import { SimulationProvider, demoScenarios } from './providers/simulation';
 import { AgentToolkitRunner, PayPalToolkitReader } from './providers/paypal-toolkit';
+import { EventStore } from './db/event-store';
+import { isRefundEvent, parseWebhookEvent, verifyWebhookSignature } from './webhooks';
+import type { WebhookHeaders } from './webhooks';
 import { ClaimExtractor } from './providers/claim-extractor';
 import { createLLMProvider } from './providers/llm-providers';
 import {
@@ -90,7 +93,15 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   const app = express();
   if (hosted) app.set('trust proxy', 1);
   app.disable('x-powered-by');
-  app.use(express.json({ limit: '16kb' }));
+  app.use(
+    express.json({
+      limit: '64kb',
+      // Raw body is retained for PayPal webhook signature verification.
+      verify: (req, _res, buffer) => {
+        (req as express.Request & { rawBody?: string }).rawBody = buffer.toString('utf8');
+      },
+    }),
+  );
   const csrf = randomBytes(24).toString('hex');
   if (hosted) {
     app.use('/api', rateLimit({ windowMs: 60_000, max: 120 }));
@@ -161,6 +172,66 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     next();
   });
   app.get('/health', (_req, res) => res.json({ status: 'ok', mode }));
+  // ── PayPal webhooks ────────────────────────────────────────
+  // External endpoint: no CSRF/session (PayPal posts server-to-server).
+  // Security comes from signature verification when PAYPAL_WEBHOOK_ID
+  // is set; without it events are accepted but labeled UNVERIFIED and
+  // can only trigger re-reads, never state changes.
+  const events = new EventStore(filename);
+  const webhookConfigured = Boolean(process.env.PAYPAL_WEBHOOK_ID);
+  app.post('/webhooks/paypal', async (req, res) => {
+    const rawBody = (req as express.Request & { rawBody?: string }).rawBody;
+    if (!rawBody) {
+      res.status(400).json({ error: 'Body required' });
+      return;
+    }
+    let event: ReturnType<typeof parseWebhookEvent>;
+    try {
+      event = parseWebhookEvent(rawBody);
+    } catch {
+      res.status(400).json({ error: 'Malformed webhook event' });
+      return;
+    }
+    if (webhookConfigured) {
+      const verified = await verifyWebhookSignature({
+        webhookId: process.env.PAYPAL_WEBHOOK_ID!,
+        headers: req.headers as WebhookHeaders,
+        rawBody,
+        clientId: process.env.PAYPAL_CLIENT_ID || '',
+        clientSecret: process.env.PAYPAL_CLIENT_SECRET || '',
+      });
+      if (!verified) {
+        events.record({ ...event, verification: 'REJECTED' });
+        res.status(401).json({ error: 'Webhook signature verification failed' });
+        return;
+      }
+      event.verification = 'SIGNATURE_VERIFIED';
+    }
+    const fresh = events.record(event);
+    // Refund events trigger reconciliation, which re-reads authoritative
+    // state via the API before changing anything.
+    let reconciledCase: string | null = null;
+    if (isRefundEvent(event.eventType) && event.resourceId) {
+      const reservation = store.db
+        .prepare('SELECT logicalId FROM reservations WHERE refundId=?')
+        .get(event.resourceId) as { logicalId: string } | undefined;
+      if (reservation) {
+        try {
+          await service.reconcile(reservation.logicalId);
+          reconciledCase = reservation.logicalId;
+        } catch {
+          // Reconciliation failure is recorded on the case; the webhook acks.
+        }
+      }
+    }
+    res.status(200).json({
+      received: true,
+      duplicate: !fresh,
+      verification: event.verification,
+      reconciledCase,
+    });
+  });
+  app.get('/api/events', (_req, res) => res.json(events.list()));
   app.get('/api/config', (_req, res) =>
     res.json({
       mode,
@@ -298,6 +369,7 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     close() {
       store.close();
       database.close();
+      events.close();
     },
   };
 }

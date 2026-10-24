@@ -180,9 +180,7 @@ export class PayPalToolkitReader {
     };
   }
 
-  async refund(
-    refundId: string,
-  ): Promise<{
+  async refund(refundId: string): Promise<{
     id: string;
     status: string;
     amountMinor: number | null;
