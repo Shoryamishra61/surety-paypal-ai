@@ -3,6 +3,8 @@ import { ClaimExtractor, validateExtraction } from '../src/providers/claim-extra
 import { ClaimType } from '../src/core/types';
 import { parseUsd, PayPalSandbox } from '../src/providers/paypal';
 import { toGeminiSchema } from '../src/providers/llm';
+import { PayPalToolkitReader } from '../src/providers/paypal-toolkit';
+import type { ToolkitRunner } from '../src/providers/paypal-toolkit';
 import {
   createLLMProvider,
   GeminiProvider,
@@ -177,4 +179,54 @@ it('malformed PayPal success does not count as refund', async () => {
       'id',
     ),
   ).rejects.toThrow();
+});
+
+// ── PayPal Agent Toolkit reader ──────────────────────────────
+const fakeRunner = (handler: (method: string, arg: any) => unknown): ToolkitRunner => ({
+  run: async (method, arg) => handler(method, arg),
+});
+it('maps PayPal tracking statuses to Surety fulfillment states', async () => {
+  const cases: [string, string][] = [
+    ['DELIVERED', 'DELIVERED'],
+    ['SHIPPED', 'IN_TRANSIT'],
+    ['ON_HOLD', 'PROCESSING'],
+    ['WEIRD_NEW_STATUS', 'UNKNOWN'],
+  ];
+  for (const [raw, expected] of cases) {
+    const reader = new PayPalToolkitReader(
+      fakeRunner(() => ({
+        trackers: [
+          {
+            transaction_id: 'CAP',
+            tracking_number: 'T-1',
+            status: raw,
+            status_update_time: '2026-10-24T00:00:00.000Z',
+          },
+        ],
+      })),
+    );
+    const tracking = await reader.trackingForCapture('ORD', 'CAP');
+    expect(tracking?.status).toBe(expected);
+    expect(tracking?.rawStatus).toBe(raw);
+  }
+});
+it('returns null when no tracking exists and throws on infra failure', async () => {
+  const empty = new PayPalToolkitReader(fakeRunner(() => ({ trackers: [] })));
+  expect(await empty.trackingForCapture('ORD', 'CAP')).toBeNull();
+  const notFound = new PayPalToolkitReader(
+    fakeRunner(() => {
+      throw new Error('PayPal GET failed (404): resource_not_found');
+    }),
+  );
+  expect(await notFound.trackingForCapture('ORD', 'CAP')).toBeNull();
+  const broken = new PayPalToolkitReader(
+    fakeRunner(() => {
+      throw new Error('socket hang up');
+    }),
+  );
+  await expect(broken.trackingForCapture('ORD', 'CAP')).rejects.toThrow('socket hang up');
+});
+it('rejects toolkit refund responses with mismatched id', async () => {
+  const reader = new PayPalToolkitReader(fakeRunner(() => ({ id: 'OTHER', status: 'COMPLETED' })));
+  await expect(reader.refund('REFUND-1')).rejects.toThrow('mismatch');
 });

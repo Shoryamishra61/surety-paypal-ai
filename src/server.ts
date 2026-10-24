@@ -15,6 +15,7 @@ import {
   dollarsToMinor,
 } from './providers/paypal';
 import { SimulationProvider, demoScenarios } from './providers/simulation';
+import { AgentToolkitRunner, PayPalToolkitReader } from './providers/paypal-toolkit';
 import { ClaimExtractor } from './providers/claim-extractor';
 import { createLLMProvider } from './providers/llm-providers';
 import {
@@ -68,6 +69,17 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
           process.env.PAYPAL_CLIENT_ID || '',
           process.env.PAYPAL_CLIENT_SECRET || '',
           records,
+          fetch,
+          // Official Agent Toolkit read path: orders, tracking, refunds,
+          // transactions, disputes. Writes stay on the hardened REST adapter.
+          async () =>
+            new PayPalToolkitReader(
+              await AgentToolkitRunner.create(
+                process.env.PAYPAL_CLIENT_ID || '',
+                process.env.PAYPAL_CLIENT_SECRET || '',
+                true,
+              ),
+            ),
         );
   const database = new SuretyDatabase(filename);
   const store = new ExecutionStore(filename);

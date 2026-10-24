@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { EvidenceRecord, EvidenceProvider, ProposedAction } from '../core/types';
+import { PayPalToolkitReader } from './paypal-toolkit';
 
 export interface FinancialFacts {
   evidence: EvidenceRecord[];
@@ -96,13 +97,24 @@ const orderSchema = z.object({
 /** Sandbox only. No automatic fallback, write retry, or production host selection. */
 export class PayPalSandbox implements PaymentProvider {
   readonly mode = 'PAYPAL_SANDBOX' as const;
+  private reader: Promise<PayPalToolkitReader | null> | null = null;
   constructor(
     private clientId: string,
     private secret: string,
     private merchantRecords: MerchantRecord[],
     private request: typeof fetch = fetch,
+    toolkitReader?: () => Promise<PayPalToolkitReader | null>,
   ) {
     if (!clientId || !secret) throw new Error('PayPal sandbox credentials required');
+    this.reader = toolkitReader
+      ? toolkitReader().catch((error) => {
+          console.warn(
+            'PayPal Agent Toolkit unavailable; proceeding without tracking evidence:',
+            (error as Error).message,
+          );
+          return null;
+        })
+      : null;
   }
   private async call(
     path: string,
@@ -172,6 +184,14 @@ export class PayPalSandbox implements PaymentProvider {
         r.customerId === action.customerId,
     );
     if (!record) throw new Error('Trusted merchant relationship record unavailable');
+    const trackingEvidence: EvidenceRecord[] = [];
+    const reader = this.reader ? await this.reader : null;
+    if (reader) {
+      // Fail-closed: infra failures throw; "no tracking exists" returns null.
+      const tracking = await reader.trackingForCapture(action.orderId, action.captureId);
+      if (tracking)
+        trackingEvidence.push(reader.trackingEvidence(action.orderId, action.captureId, tracking));
+    }
     return {
       captureAmountMinor: parseUsd(capture.amount.value),
       refundedMinor: 0,
@@ -189,6 +209,7 @@ export class PayPalSandbox implements PaymentProvider {
           provenance: 'PayPal sandbox capture and order GET; timestamp is capture update_time',
         },
         ...merchantEvidence(record),
+        ...trackingEvidence,
       ],
     };
   }
