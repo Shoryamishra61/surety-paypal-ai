@@ -115,10 +115,10 @@
   margin: var(--s3) 0 0;
   border-top: 1px solid var(--rule);
   padding-top: var(--s3);
-  font-weight: 600;
+  color: var(--ink-2);
 }
 
-/* ── Outcomes ──────────────────────────────────────────────── */
+/* ── Outcomes — sentences, not code dumps ─────────────────── */
 
 .outcome-list {
   list-style: none;
@@ -136,12 +136,56 @@
   justify-content: space-between;
   align-items: baseline;
   gap: var(--s3);
+  min-width: 0;
 }
 
-.outcome-thought {
-  margin: var(--s2) 0;
-  color: var(--ink-2);
+.outcome-who {
+  font-weight: 600;
   font-size: 0.9375rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outcome-subject {
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.outcome-decision {
+  margin: var(--s2) 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 34rem;
+}
+
+.outcome-codes {
+  margin: var(--s1) 0 0;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 34rem;
+}
+
+.run-summary .num-go {
+  color: var(--go-ink);
+}
+.run-summary .num-stop {
+  color: var(--stop-ink);
+}
+.run-summary .num-hold {
+  color: var(--hold-ink);
+}
+.run-summary strong {
+  font-size: 1.05rem;
+}
+.run-summary .run-total {
+  font-weight: 400;
+  color: var(--ink-3);
 }
 
 .injection-flag {
@@ -187,7 +231,7 @@ dl.ledger.compact dd {
 
 .trace-line {
   display: grid;
-  grid-template-columns: 4.2rem minmax(7rem, 10rem) minmax(0, 1fr);
+  grid-template-columns: 4.9rem minmax(7.5rem, 10rem) minmax(0, 1fr);
   gap: var(--s3);
   padding: var(--s2) 0;
   border-bottom: 1px solid var(--rule);
@@ -198,6 +242,7 @@ dl.ledger.compact dd {
 .trace-time {
   color: var(--ink-3);
   font-size: 0.8125rem;
+  white-space: nowrap;
 }
 
 .trace-label {
