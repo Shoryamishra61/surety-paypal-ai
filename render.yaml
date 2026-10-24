@@ -1,0 +1,24 @@
+# Render blueprint — deploy the Surety demo with one click.
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: surety-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SURETY_MODE
+        value: SIMULATION
+      - key: HOST
+        value: 0.0.0.0
+      - key: DEMO_OPERATOR_PASSWORD
+        sync: false
+      - key: DEMO_REVIEWER_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # Optional: set these in the dashboard to enable the live LLM brain
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: gemini-2.0-flash
