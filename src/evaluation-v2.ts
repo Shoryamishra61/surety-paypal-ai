@@ -196,7 +196,8 @@ async function main() {
       });
       caseId = outcome.caseId;
       reasonCodes = outcome.reasonCodes;
-      if (outcome.decision === 'EXECUTE' && outcome.executionState === 'SUCCEEDED') governed = 'PAID';
+      if (outcome.decision === 'EXECUTE' && outcome.executionState === 'SUCCEEDED')
+        governed = 'PAID';
       else if (outcome.decision === 'DENY') governed = 'BLOCKED';
       else if (outcome.decision === 'REVIEW') {
         // Review cases stay unpaid unless a human approves; over-cap honest
@@ -226,7 +227,8 @@ async function main() {
 
   // ── Scoring ────────────────────────────────────────────────
   const score = (rows: Record<string, unknown>[], payColumn: 'governed' | 'ungoverned') => {
-    const paysValue = (row: Record<string, unknown>) => row[payColumn] === 'PAID' || row[payColumn] === 'PAY';
+    const paysValue = (row: Record<string, unknown>) =>
+      row[payColumn] === 'PAID' || row[payColumn] === 'PAY';
     const paidWrong = rows.filter((r) => paysValue(r) && !r.shouldPay);
     const paidRight = rows.filter((r) => paysValue(r) && r.shouldPay);
     const withheldWrong = rows.filter((r) => !paysValue(r) && r.shouldPay);

@@ -78,7 +78,9 @@ export class GovernedGateway {
       extractionMode = 'MANUAL';
     } else {
       if (!this.extractor)
-        throw new Error('No claim extractor configured; supply claimType or configure an LLM provider');
+        throw new Error(
+          'No claim extractor configured; supply claimType or configure an LLM provider',
+        );
       claim = await this.extractor.extract(input.statement, record);
       extractionMode = 'MODEL';
     }
