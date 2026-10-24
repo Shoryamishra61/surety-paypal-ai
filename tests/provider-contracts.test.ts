@@ -2,6 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { ClaimExtractor, validateExtraction } from '../src/providers/claim-extractor';
 import { ClaimType } from '../src/core/types';
 import { parseUsd, PayPalSandbox } from '../src/providers/paypal';
+import { toGeminiSchema } from '../src/providers/llm';
+import {
+  createLLMProvider,
+  GeminiProvider,
+  GroqProvider,
+  OpenAIProvider,
+} from '../src/providers/llm-providers';
+import { z } from 'zod';
 const context = { merchantId: 'M', customerId: 'C', orderId: 'ORD', captureId: 'CAP' };
 const valid = {
   claimType: ClaimType.NOT_DELIVERED,
@@ -26,16 +34,11 @@ it('preserves original statement and server identity', () =>
     customerId: 'C',
     confidence: 0,
   }));
-it('missing model credentials fail without network', async () => {
-  let calls = 0;
-  const m = new ClaimExtractor('', '', async () => {
-    calls++;
-    throw new Error('unexpected');
-  });
-  await expect(m.extract('hi', context)).rejects.toThrow('unavailable');
-  expect(calls).toBe(0);
+it('missing provider fails without network', async () => {
+  await expect(new ClaimExtractor(null).extract('hi', context)).rejects.toThrow('unavailable');
 });
-it('malformed model JSON fails closed', async () => {
+const schema = z.object({ claimType: z.nativeEnum(ClaimType), note: z.string().nullable() });
+it('openai provider fails closed on malformed model JSON', async () => {
   const request = async () =>
     new Response(
       JSON.stringify({
@@ -44,8 +47,81 @@ it('malformed model JSON fails closed', async () => {
       }),
     );
   await expect(
-    new ClaimExtractor('test', 'configured', request).extract('hi', context),
+    new OpenAIProvider('test', 'key', request).structured({
+      system: 's',
+      user: 'u',
+      schema,
+    }),
   ).rejects.toThrow();
+});
+it('gemini provider sends native response schema and fails closed on malformed JSON', async () => {
+  let body: any;
+  const request: typeof fetch = async (_url, init) => {
+    body = JSON.parse(String(init?.body));
+    return new Response(
+      JSON.stringify({
+        candidates: [{ content: { parts: [{ text: 'not json' }] } }],
+      }),
+    );
+  };
+  await expect(
+    new GeminiProvider('gemini-2.0-flash', 'key', request).structured({
+      system: 's',
+      user: 'u',
+      schema,
+    }),
+  ).rejects.toThrow();
+  // Nullability is expressed Gemini-style and unsupported keywords are dropped.
+  const properties = body.generationConfig.responseSchema.properties;
+  expect(properties.note).toMatchObject({ type: 'string', nullable: true });
+  expect(JSON.stringify(body.generationConfig.responseSchema)).not.toContain(
+    'additionalProperties',
+  );
+  expect(body.generationConfig.responseMimeType).toBe('application/json');
+});
+it('groq provider states the schema in the system prompt and fails closed on malformed JSON', async () => {
+  let body: any;
+  const request: typeof fetch = async (_url, init) => {
+    body = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ choices: [{ message: { content: '{oops' } }] }));
+  };
+  await expect(
+    new GroqProvider('llama-3.3-70b-versatile', 'key', request).structured({
+      system: 's',
+      user: 'u',
+      schema,
+    }),
+  ).rejects.toThrow();
+  expect(body.response_format.type).toBe('json_object');
+  expect(body.messages[0].content).toContain('"claimType"');
+});
+it('gemini schema conversion strips unsupported keywords', () => {
+  const converted = toGeminiSchema({
+    type: ['string', 'null'],
+    additionalProperties: false,
+    format: 'date-time',
+  });
+  expect(converted).toEqual({ type: 'string', nullable: true });
+});
+describe('provider selection from environment', () => {
+  const restore = { ...process.env };
+  it('selects gemini first, groq second, openai third, none last', () => {
+    expect(createLLMProvider({ GEMINI_API_KEY: 'g' })?.name).toBe('gemini');
+    expect(createLLMProvider({ GROQ_API_KEY: 'q' })?.name).toBe('groq');
+    expect(createLLMProvider({ OPENAI_API_KEY: 'o', OPENAI_MODEL: 'gpt-4o-mini' })?.name).toBe(
+      'openai',
+    );
+    expect(createLLMProvider({})).toBeNull();
+    expect(
+      createLLMProvider({ LLM_PROVIDER: 'groq', GEMINI_API_KEY: 'g', GROQ_API_KEY: 'q' })?.name,
+    ).toBe('groq');
+  });
+  it('honors model overrides', () => {
+    expect(createLLMProvider({ GEMINI_API_KEY: 'g', LLM_MODEL: 'gemini-2.5-flash' })?.model).toBe(
+      'gemini-2.5-flash',
+    );
+  });
+  void restore;
 });
 it.each(['NaN', '1e2', '-1', '0.001', 'Infinity'])('rejects financial string %s', (v) =>
   expect(() => parseUsd(v)).toThrow(),

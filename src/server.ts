@@ -16,6 +16,7 @@ import {
 } from './providers/paypal';
 import { SimulationProvider, demoScenarios } from './providers/simulation';
 import { ClaimExtractor } from './providers/claim-extractor';
+import { createLLMProvider } from './providers/llm-providers';
 import {
   Role,
   SessionAuth,
@@ -71,10 +72,8 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   const database = new SuretyDatabase(filename);
   const store = new ExecutionStore(filename);
   const service = new Surety(store, database, provider);
-  const extractor = new ClaimExtractor(
-    process.env.OPENAI_API_KEY || '',
-    process.env.OPENAI_MODEL || '',
-  );
+  const llm = createLLMProvider();
+  const extractor = new ClaimExtractor(llm);
   const sessions = new SessionAuth();
   const app = express();
   if (hosted) app.set('trust proxy', 1);
@@ -155,7 +154,8 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
       mode,
       hosted,
       csrf,
-      aiConfigured: Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL),
+      aiConfigured: Boolean(llm),
+      aiProvider: llm ? { name: llm.name, model: llm.model } : null,
       scenarios: mode === 'SIMULATION' ? demoScenarios : [],
       transactions: mode === 'SIMULATION' ? records : [],
     }),
