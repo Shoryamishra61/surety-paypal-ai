@@ -106,6 +106,15 @@ export const demoScenarios: SimScenario[] = [
     orderAmount: 39,
     captureAmount: 49,
   },
+  {
+    id: 'bulk',
+    title: 'A high-value lost shipment beyond the agent cap',
+    statement: 'My camera lens order never arrived. Please refund the $600 I paid.',
+    claimType: ClaimType.NOT_DELIVERED,
+    state: 'LOST',
+    amount: 600,
+    orderAmount: 649,
+  },
 ];
 
 export function scenarioRecord(scenario: SimScenario): MerchantRecord {

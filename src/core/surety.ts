@@ -135,6 +135,8 @@ export class Surety {
     rawAction: unknown,
     rawClaim: unknown,
     extractionMode: 'MODEL' | 'FIXTURE' | 'MANUAL' = 'MANUAL',
+    agentId?: string,
+    injectionSuspected = false,
   ): Promise<EvaluatedCase> {
     const action = ProposedActionSchema.parse(rawAction);
     const claim = TypedClaimSchema.parse(rawClaim);
@@ -151,6 +153,8 @@ export class Surety {
       evidence: facts.evidence,
       ...evaluated,
       mode: this.provider.mode,
+      agentId: agentId ?? null,
+      injectionSuspected,
       executionState: 'NOT_EXECUTED',
       approvalId: null,
       refundId: null,
@@ -246,8 +250,10 @@ export class Surety {
       },
       facts.captureAmountMinor,
       facts.refundedMinor,
-      toMinor(currencyPolicy.customerDailyLimit, record.action.currency),
-      toMinor(currencyPolicy.merchantDailyLimit, record.action.currency),
+      // Daily limits guard autonomous agents; an approval consumed inside
+      // this same reservation authorizes exceeding them (never the balance).
+      record.approvalId ? null : toMinor(currencyPolicy.customerDailyLimit, record.action.currency),
+      record.approvalId ? null : toMinor(currencyPolicy.merchantDailyLimit, record.action.currency),
     );
     if (record.approvalId) {
       const consumed = this.approvals.validateAndConsume(

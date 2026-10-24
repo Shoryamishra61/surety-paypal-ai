@@ -17,6 +17,10 @@ import {
 import { SimulationProvider, demoScenarios, scenarioRecord } from './providers/simulation';
 import { AgentToolkitRunner, PayPalToolkitReader } from './providers/paypal-toolkit';
 import { EventStore } from './db/event-store';
+import { EventBus } from './agent/event-bus';
+import { GovernedGateway, proposalSchema } from './agent/gateway';
+import { runAgent } from './agent/agent';
+import { seededInbox, inboxSchema } from './agent/inbox';
 import { isRefundEvent, parseWebhookEvent, verifyWebhookSignature } from './webhooks';
 import type { WebhookHeaders } from './webhooks';
 import { ClaimExtractor } from './providers/claim-extractor';
@@ -170,6 +174,16 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   // is set; without it events are accepted but labeled UNVERIFIED and
   // can only trigger re-reads, never state changes.
   const events = new EventStore(filename);
+  const bus = new EventBus();
+  bus.subscribe((event) =>
+    events.recordAgentEvent({
+      type: event.type,
+      runId: event.runId,
+      payload: event.payload,
+      at: event.at,
+    }),
+  );
+  const gateway = new GovernedGateway(service, extractor, records, bus);
   const webhookConfigured = Boolean(process.env.PAYPAL_WEBHOOK_ID);
   app.post('/webhooks/paypal', async (req, res) => {
     const rawBody = (req as express.Request & { rawBody?: string }).rawBody;
@@ -263,6 +277,50 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     res.json({ ok: true });
   });
   app.get('/api/transactions', (_req, res) => res.json(records));
+  // ── Agent surface ─────────────────────────────────────────
+  app.get('/api/agent/inbox', (_req, res) =>
+    res.json(seededInbox.map(({ intent: _intent, ...message }) => message)),
+  );
+  app.post('/api/agent/propose', async (req, res) =>
+    res.json(await gateway.propose(proposalSchema.parse(req.body))),
+  );
+  app.post('/api/agent/run', async (req, res) => {
+    const { ids } = inboxSchema.parse(req.body);
+    const messages = seededInbox.filter((m) => ids.includes(m.id));
+    if (messages.length !== ids.length) throw new Error('Unknown inbox message id');
+    const result = await runAgent(
+      {
+        gateway,
+        bus,
+        llm,
+        orders: records.map((r) => ({
+          orderId: r.orderId,
+          summary: `purchase by ${r.customerId}`,
+        })),
+      },
+      messages,
+    );
+    res.json(result);
+  });
+  app.get('/api/agent/runs', (_req, res) => res.json(events.listAgentEvents()));
+  // ── SSE event stream ──────────────────────────────────────
+  app.get('/api/events/stream', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+    const lastEventId = Number(req.get('Last-Event-ID') || 0);
+    const write = (event: { id: number; type: string }) => {
+      res.write(`id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+    };
+    for (const event of bus.replay(Number.isFinite(lastEventId) ? lastEventId : 0)) write(event);
+    const unsubscribe = bus.subscribe(write);
+    const ping = setInterval(() => res.write(': ping\n\n'), 15000);
+    req.on('close', () => {
+      unsubscribe();
+      clearInterval(ping);
+    });
+  });
   app.get('/api/cases', (_req, res) => res.json(store.listCases()));
   app.get('/api/cases/:id', (req, res) => res.json(service.get(req.params.id)));
   app.get('/api/cases/:id/export', (req, res) => {

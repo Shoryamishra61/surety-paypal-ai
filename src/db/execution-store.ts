@@ -66,12 +66,18 @@ export class ExecutionStore {
     return this.db.prepare('SELECT * FROM reservations WHERE logicalId=?').get(logicalId) as
       Reservation | undefined;
   }
+  /**
+   * Daily limits are agent guardrails: a reservation carrying a valid,
+   * unconsumed approval (consumed atomically below) may pass null limits —
+   * a human authorized this exact action. The refundable-balance rule and
+   * one-unresolved-per-capture invariant are never overridable.
+   */
   reserve(
     record: Reservation,
     captureAmountMinor: number,
     refundedMinor: number,
-    customerLimitMinor: number,
-    merchantLimitMinor: number,
+    customerLimitMinor: number | null,
+    merchantLimitMinor: number | null,
   ): void {
     this.db
       .transaction(() => {
@@ -97,8 +103,8 @@ export class ExecutionStore {
           day,
         );
         if (
-          customer + record.amountMinor > customerLimitMinor ||
-          merchant + record.amountMinor > merchantLimitMinor
+          (customerLimitMinor !== null && customer + record.amountMinor > customerLimitMinor) ||
+          (merchantLimitMinor !== null && merchant + record.amountMinor > merchantLimitMinor)
         )
           throw new Error('Daily limit exceeded');
         if (record.approvalId) {
