@@ -19,7 +19,7 @@ async function main() {
   const run = await post('/api/agent/run', {
     ids: ['msg-001', 'msg-002', 'msg-003', 'msg-004', 'msg-005', 'msg-006', 'msg-007', 'msg-008', 'msg-009', 'msg-010', 'msg-011'],
   });
-  const summary = run as { outcomes: { proposal: { decision: string; executionState: string } | null }[] };
+  const summary = run as { outcomes: { action: string; proposal: { decision: string; executionState: string } | null }[] };
   const decisions = summary.outcomes.map((o) => o.proposal?.decision ?? o.action);
   console.log('Agent run complete:', JSON.stringify(decisions));
   // Approve one review item so the queue shows both states over time.
