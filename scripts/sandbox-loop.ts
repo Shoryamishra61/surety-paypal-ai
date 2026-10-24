@@ -57,7 +57,7 @@ async function call(accessToken: string, path: string, init: RequestInit = {}): 
     },
     signal: AbortSignal.timeout(15000),
   });
-  const body = await response.json().catch(() => ({}));
+  const body: any = await response.json().catch(() => ({}));
   if (!response.ok)
     throw new Error(`PayPal ${init.method ?? 'GET'} ${path} failed (${response.status}): ${body.name ?? ''}`);
   return body;
@@ -65,7 +65,7 @@ async function call(accessToken: string, path: string, init: RequestInit = {}): 
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function createOrReuseOrder(accessToken: string): Promise<{ id: string; status: string; links: any[] }> {
+async function createOrReuseOrder(accessToken: string): Promise<any> {
   if (existsSync(ORDER_FILE)) {
     const stored = JSON.parse(readFileSync(ORDER_FILE, 'utf8'));
     const order = await call(accessToken, `/v2/checkout/orders/${stored.id}`);

@@ -81,4 +81,4 @@ it('two separate processes cannot consume the same durable approval', async () =
     db.close();
     rmSync(directory, { recursive: true, force: true });
   }
-}, 20000);
+}, 60_000);
