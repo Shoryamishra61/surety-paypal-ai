@@ -39,6 +39,9 @@ function toNumber(value: number | bigint): number {
 
 export function openDatabase(filename: string): SqliteDatabase {
   const db = new DatabaseSync(filename);
+  // Match better-sqlite3's default busy timeout so concurrent writers
+  // wait briefly instead of failing immediately with SQLITE_BUSY.
+  db.exec('PRAGMA busy_timeout = 5000');
   const statement = (sql: string): SqliteStatement => {
     const prepared = db.prepare(sql);
     return {

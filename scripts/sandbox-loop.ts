@@ -59,7 +59,9 @@ async function call(accessToken: string, path: string, init: RequestInit = {}): 
   });
   const body: any = await response.json().catch(() => ({}));
   if (!response.ok)
-    throw new Error(`PayPal ${init.method ?? 'GET'} ${path} failed (${response.status}): ${body.name ?? ''}`);
+    throw new Error(
+      `PayPal ${init.method ?? 'GET'} ${path} failed (${response.status}): ${body.name ?? ''}`,
+    );
   return body;
 }
 
@@ -96,7 +98,10 @@ async function createOrReuseOrder(accessToken: string): Promise<any> {
       },
     }),
   });
-  writeFileSync(ORDER_FILE, JSON.stringify({ id: order.id, status: order.status, links: order.links }, null, 2));
+  writeFileSync(
+    ORDER_FILE,
+    JSON.stringify({ id: order.id, status: order.status, links: order.links }, null, 2),
+  );
   return order;
 }
 
@@ -111,10 +116,14 @@ async function main() {
 
   // 2. Wait for buyer approval
   if (order.status !== 'COMPLETED') {
-    const approvalUrl = order.links?.find((l: any) => ['payer-action', 'approve'].includes(l.rel))?.href;
+    const approvalUrl = order.links?.find((l: any) =>
+      ['payer-action', 'approve'].includes(l.rel),
+    )?.href;
     if (order.status === 'CREATED' || order.status === 'PAYER_ACTION_REQUIRED') {
       if (!approvalUrl) throw new Error('No approval link on order');
-      console.log('\n>>> ACTION REQUIRED: open this link and approve as the sandbox buyer account:');
+      console.log(
+        '\n>>> ACTION REQUIRED: open this link and approve as the sandbox buyer account:',
+      );
       console.log(`>>> ${approvalUrl}\n`);
       const deadline = Date.now() + timeoutMinutes * 60_000;
       while (Date.now() < deadline) {
@@ -132,7 +141,9 @@ async function main() {
   let details = order;
   if (details.status === 'APPROVED') {
     if (existsSync(CAPTURE_INTENT_FILE))
-      throw new Error('Capture already attempted; inspect the order before manual recovery. No blind retry.');
+      throw new Error(
+        'Capture already attempted; inspect the order before manual recovery. No blind retry.',
+      );
     const requestId = `surety-capture-${order.id}`;
     writeFileSync(
       CAPTURE_INTENT_FILE,
@@ -163,7 +174,11 @@ async function main() {
   console.log(`Merchant record bound: order ${order.id}, capture ${capture.id}`);
 
   // 5. Surety adjudication and execution
-  const provider = new PayPalSandbox(process.env.PAYPAL_CLIENT_ID!, process.env.PAYPAL_CLIENT_SECRET!, [record]);
+  const provider = new PayPalSandbox(
+    process.env.PAYPAL_CLIENT_ID!,
+    process.env.PAYPAL_CLIENT_SECRET!,
+    [record],
+  );
   const db = new SuretyDatabase('sandbox-validation.db');
   const store = new ExecutionStore('sandbox-validation.db');
   try {
@@ -189,10 +204,14 @@ async function main() {
       extractedCurrency: 'USD',
       confidence: 0,
     };
-    const existing = store.listCases().find((c) => (c as any).action?.captureId === record.captureId);
+    const existing = store
+      .listCases()
+      .find((c) => (c as any).action?.captureId === record.captureId);
     const created = existing ? surety.get(existing.caseId) : await surety.create(action, claim);
     if (created.decision !== 'EXECUTE')
-      throw new Error(`Policy declined automatic execution (${created.decision}); inspect the case`);
+      throw new Error(
+        `Policy declined automatic execution (${created.decision}); inspect the case`,
+      );
     const result = await surety.execute(created.caseId);
 
     // 6. Evidence record

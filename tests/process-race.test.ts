@@ -64,6 +64,9 @@ it('two separate processes cannot consume the same durable approval', async () =
         new Promise<boolean>((resolve, reject) => {
           worker.once('message', (result: any) => resolve(result.valid));
           worker.once('error', reject);
+          worker.once('exit', (code) => {
+            if (code) reject(new Error(`Approval worker exited with ${code}`));
+          });
         }),
     );
     for (const worker of workers)
