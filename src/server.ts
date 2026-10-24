@@ -16,11 +16,25 @@ import {
 } from './providers/paypal';
 import { SimulationProvider, demoScenarios } from './providers/simulation';
 import { ClaimExtractor } from './providers/claim-extractor';
+import {
+  Role,
+  SessionAuth,
+  clearedSessionCookie,
+  expectedCredentials,
+  parseCookies,
+  sessionCookie,
+  SESSION_COOKIE,
+} from './auth';
+import { rateLimit } from './rate-limit';
+
+const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost', '[::1]', '::1'];
 
 export function createApplication(filename = process.env.DATABASE_PATH || 'surety.db') {
   const mode = process.env.SURETY_MODE || 'SIMULATION';
   if (!['SIMULATION', 'PAYPAL_SANDBOX'].includes(mode))
     throw new Error('Unsupported mode; production execution is disabled');
+  const bindHost = process.env.HOST || '127.0.0.1';
+  const hosted = !LOOPBACK_HOSTS.includes(bindHost);
   const records: MerchantRecord[] =
     mode === 'SIMULATION'
       ? demoScenarios.map((s) => ({
@@ -61,19 +75,33 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     process.env.OPENAI_API_KEY || '',
     process.env.OPENAI_MODEL || '',
   );
+  const sessions = new SessionAuth();
   const app = express();
+  if (hosted) app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use(express.json({ limit: '16kb' }));
   const csrf = randomBytes(24).toString('hex');
+  if (hosted) {
+    app.use('/api', rateLimit({ windowMs: 60_000, max: 120 }));
+    app.use('/api/auth/login', rateLimit({ windowMs: 15 * 60_000, max: 10 }));
+  }
   app.use((req, res, next) => {
-    if (!['127.0.0.1', 'localhost', '[::1]'].includes(req.hostname)) {
+    if (!hosted && !LOOPBACK_HOSTS.includes(req.hostname)) {
       res.status(403).json({ error: 'Local prototype accepts loopback hosts only' });
       return;
     }
     const origin = req.get('Origin');
-    if (origin && origin !== `http://${req.get('Host')}`) {
-      res.status(403).json({ error: 'Cross-origin request rejected' });
-      return;
+    if (origin) {
+      let originHost: string | null = null;
+      try {
+        originHost = new URL(origin).host;
+      } catch {
+        originHost = null;
+      }
+      if (!originHost || originHost !== req.get('Host')) {
+        res.status(403).json({ error: 'Cross-origin request rejected' });
+        return;
+      }
     }
 
     res.setHeader(
@@ -90,16 +118,33 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
       res.status(403).json({ error: 'Refresh the application session' });
       return;
     }
-    if (req.path.startsWith('/api/') && req.path !== '/api/config' && mode === 'PAYPAL_SANDBOX') {
-      const expected = req.path.endsWith('/approve')
-        ? process.env.REVIEWER_TOKEN!
-        : process.env.OPERATOR_TOKEN!;
-      const supplied = req.get('Authorization')?.replace(/^Bearer /, '') || '';
-      const a = Buffer.from(expected),
-        b = Buffer.from(supplied);
-      if (a.length !== b.length || !timingSafeEqual(a, b)) {
-        res.status(401).json({ error: 'Authorized operator or reviewer credential required' });
-        return;
+    const authRequired =
+      req.path.startsWith('/api/') &&
+      req.path !== '/api/config' &&
+      !req.path.startsWith('/api/auth/');
+    if (authRequired) {
+      if (hosted) {
+        const payload = sessions.verify(parseCookies(req.get('Cookie'))[SESSION_COOKIE]);
+        if (!payload) {
+          res.status(401).json({ error: 'Sign in to use the Surety API' });
+          return;
+        }
+        if (req.path.endsWith('/approve') && payload.role !== 'reviewer') {
+          res.status(403).json({ error: 'Reviewer role required for approvals' });
+          return;
+        }
+        (req as express.Request & { session?: typeof payload }).session = payload;
+      } else if (mode === 'PAYPAL_SANDBOX') {
+        const expected = req.path.endsWith('/approve')
+          ? process.env.REVIEWER_TOKEN!
+          : process.env.OPERATOR_TOKEN!;
+        const supplied = req.get('Authorization')?.replace(/^Bearer /, '') || '';
+        const a = Buffer.from(expected),
+          b = Buffer.from(supplied);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          res.status(401).json({ error: 'Authorized operator or reviewer credential required' });
+          return;
+        }
       }
     }
     next();
@@ -108,12 +153,40 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   app.get('/api/config', (_req, res) =>
     res.json({
       mode,
+      hosted,
       csrf,
       aiConfigured: Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_MODEL),
       scenarios: mode === 'SIMULATION' ? demoScenarios : [],
       transactions: mode === 'SIMULATION' ? records : [],
     }),
   );
+  app.post('/api/auth/login', (req, res) => {
+    const input = z
+      .object({ role: z.enum(['operator', 'reviewer']), password: z.string().min(1).max(200) })
+      .strict()
+      .parse(req.body);
+    const expected = expectedCredentials()[input.role as Role];
+    const a = Buffer.from(expected);
+    const b = Buffer.from(input.password);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
+    }
+    res.setHeader('Set-Cookie', sessionCookie(sessions.issue(input.role), hosted));
+    res.json({ role: input.role });
+  });
+  app.get('/api/auth/session', (req, res) => {
+    const payload = sessions.verify(parseCookies(req.get('Cookie'))[SESSION_COOKIE]);
+    if (!payload) {
+      res.status(401).json({ error: 'No active session' });
+      return;
+    }
+    res.json({ role: payload.role, expiresAt: payload.exp });
+  });
+  app.post('/api/auth/logout', (_req, res) => {
+    res.setHeader('Set-Cookie', clearedSessionCookie(hosted));
+    res.json({ ok: true });
+  });
   app.get('/api/transactions', (_req, res) => res.json(records));
   app.get('/api/cases', (_req, res) => res.json(store.listCases()));
   app.get('/api/cases/:id', (req, res) => res.json(service.get(req.params.id)));
@@ -177,7 +250,11 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     res.json(
       service.approve(
         req.params.id,
-        mode === 'SIMULATION' ? 'SIMULATED_LOCAL_REVIEWER' : 'AUTHENTICATED_REVIEWER',
+        mode === 'SIMULATION'
+          ? hosted
+            ? 'HOSTED_REVIEWER'
+            : 'SIMULATED_LOCAL_REVIEWER'
+          : 'AUTHENTICATED_REVIEWER',
       ),
     ),
   );
@@ -205,8 +282,10 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
 if (require.main === module) {
   const runtime = createApplication();
   const port = Number(process.env.PORT || 3100);
-  const server = runtime.app.listen(port, '127.0.0.1', () =>
-    console.log(`Surety listening at http://127.0.0.1:${port}; ${runtime.service.provider.mode}`),
+  const server = runtime.app.listen(port, process.env.HOST || '127.0.0.1', () =>
+    console.log(
+      `Surety listening at http://${process.env.HOST || '127.0.0.1'}:${port}; ${runtime.service.provider.mode}`,
+    ),
   );
   process.on('SIGINT', () =>
     server.close(() => {
