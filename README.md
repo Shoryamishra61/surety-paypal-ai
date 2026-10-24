@@ -1,88 +1,110 @@
-# SURETY — Premise-bound execution
+# SURETY — the policy and proof layer for AI agents that move money on PayPal
 
-**Agents can move money. Surety makes them prove why.**
+**LLM agents propose. Surety verifies, enforces, and proves. PayPal executes.**
 
-A merchant support agent may be allowed to refund $49 even when the claim behind that refund is contradicted by delivery records. Surety binds the claim to the capture and order, evaluates evidence, applies policy, and records the decision before any provider write.
+Autonomous agents can now initiate payments — but the field's own track record (an AI assistant that mishandled refunds at scale, an "AI lawyer" FTC settlement over unsubstantiated claims) shows what happens when model discretion meets money movement. Surety is the missing governance layer: a deterministic adjudicator that sits between customer-facing AI agents and the PayPal REST API, checks every proposed refund against real payment and fulfillment records, enforces policy in exact integer arithmetic, and produces a verifiable evidence record — a FactPack — for every decision.
 
-## Run locally
+## The 90-second version
 
-Requires Node.js 22 or later and npm. This Windows checkout was built with the installed runtime; see `node --version` for your environment.
+ARIA, a support agent, reads customer emails and proposes refunds through Surety's governed gateway. For each proposal, Surety:
 
-```powershell
+1. **Extracts** the claim with an LLM (Gemini/Groq/OpenAI) under a strict JSON schema — customer text is fenced data, never instructions; identity comes from the server, never the model.
+2. **Binds** it to the real PayPal capture, order, and merchant/customer relationships, plus delivery evidence (PayPal shipment tracking via the official **PayPal Agent Toolkit**, merchant records, and settlement history).
+3. **Verifies** the premise deterministically: a fresh, consistent LOST record supports a non-delivery refund; a DELIVERED record *contradicts* it; duplicate-charge claims need two same-amount captures; double-refund attempts are caught against settlement history.
+4. **Enforces policy** in integer minor units: autonomous caps, per-currency daily limits, refundable-balance math (JPY-style zero-decimal currencies included).
+5. **Executes** on PayPal sandbox with idempotency keys and durable reservations — or blocks, or routes to a human review queue with the exact action pre-bound (digests pin action, claim, evidence, and policy version; an approval can exceed daily limits but never the refundable balance).
+
+Every step streams to a live console and lands in a durable audit trail.
+
+## What the evidence shows
+
+An 84-case adversarial suite (`npm run evaluate`, artifacts committed in `artifacts/`): **0 false refunds, 0 withheld honest refunds, 100% of prompt-injection attempts blocked, p95 latency under 5 ms.** The same suite through an ungoverned LLM-discretion baseline pays **38 false refunds ($1,862)** — that contrast is the product.
+
+## Quickstart (5 minutes, zero credentials)
+
+Requires Node 22.5+ (uses the built-in `node:sqlite`; no native builds).
+
+```bash
 npm ci
-npm test
-npm run build
-npm run evaluate
+cd web && npm install && npm run build && cd ..
+npm run build          # optional; the server also runs via tsx
 npm start
 ```
 
-Open http://127.0.0.1:3100. Default mode is **SIMULATION**: seeded transactions, fixture claim extraction, simulated refunds. No credentials needed. Select delivered, lost, damaged, or processing; verify the premise; execute eligible cases or approve an exact review action; download its FactPack. Evaluation and execution are separate buttons. History survives restarts.
+Open **http://127.0.0.1:3100** — the console boots in **simulation mode**: seeded orders, deterministic agent brain, simulated refunds. Then:
 
-To rehearse against a fresh local store without deleting evidence:
+- **Agent console** — select inbox messages (including a prompt-injection attempt) and run the agent; watch every thought, proposal, and verdict stream live.
+- **Case inbox** — every adjudicated case in a ledger grid; click through for the full FactPack: evidence with provenance, verdicts, digests.
+- **Review queue** — approve an over-cap refund as the reviewer; execution uses the exact approved action.
+- **Policy** — adjust per-currency caps; **Analytics** — dollars moved vs dollars kept.
 
-```powershell
-$env:DATABASE_PATH = "rehearsal-$(Get-Date -Format yyyyMMdd-HHmmss).db"
+## Adding live AI (recommended for judging)
+
+The demo works without keys, but live inference is one free key away — [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (Gemini free tier), then:
+
+```bash
+cp .env.example .env   # add GEMINI_API_KEY=...
 npm start
 ```
 
-The old store remains intact. Do not share a database between simulation and sandbox modes.
+The masthead shows `AI · gemini` and ARIA's brain switches from deterministic to LLM (with automatic deterministic fallback on rate limits).
 
-## What works, and what is not verified
+## Real PayPal sandbox money
 
-- Deterministic relationship checks, freshness/provenance checks, denial/review/execute decisions.
-- Durable SQLite reservation before provider calls, exact-action approvals, one logical execution per case, balance and daily reservations, uncertain-outcome retention.
-- Case UI, persistent snapshots, JSON evidence export, HTTP and provider-contract tests.
-- PayPal sandbox OAuth authentication and real USD 1 order creation were verified on 2026-10-04. Buyer approval, capture and real refund remain pending. **No real refund success claimed.**
-- OpenAI structured extraction adapter is implemented and contract-tested with stub responses. No real model inference has run. Paid API setup is deferred at the user's request; local model runtimes were not available.
-- Self-authored 60-case synthetic specification evaluation is reproducible. It is not held out and is not production security evidence.
+With [PayPal developer credentials](https://developer.paypal.com/):
 
-## Flow
-
-```mermaid
-flowchart LR
-  A[Customer statement] --> B[Typed claim]
-  B --> C[Bind capture / order / merchant / customer]
-  C --> D[Evaluate trusted records]
-  D --> E[Deterministic policy]
-  E --> F[Deny or review or execute]
-  F --> G[Durable reservation]
-  G --> H[PayPal sandbox or labeled simulation]
-  H --> I[Versioned FactPack]
+```bash
+npx tsx scripts/sandbox-loop.ts
 ```
 
-Only a fresh, consistent LOST record supports automatic non-delivery refunds. DELIVERED contradicts that claim; PROCESSING and ambiguous states require review. Other claim types currently require investigation. Currency is USD only; amounts must have cent precision. Human approval cannot override relationship errors or contradicted premises. The model receives no payment tools or PayPal credentials.
+creates a USD 1 sandbox order, waits for buyer approval (prints the link), captures, binds a disclosed synthetic LOST fulfillment record, and pushes a **real refund through Surety's adjudication** — every API call logged to `artifacts/sandbox-loop.json`. Fulfillment records are explicitly synthetic and labeled; nothing fabricates PayPal state.
 
-## Sandbox configuration
+Set `SURETY_MODE=PAYPAL_SANDBOX` to run the server against live sandbox calls (requires `PAYPAL_CLIENT_ID/SECRET`, distinct `OPERATOR_TOKEN`/`REVIEWER_TOKEN`, and a `merchant-records.json`).
 
-Copy `.env.example` to `.env` without overwriting an existing credential file. Configure PayPal sandbox client credentials, distinct operator/reviewer tokens, and `MERCHANT_RECORDS_PATH`. All credentials remain server-side except operator/reviewer bearer tokens entered in the local access form. The app binds loopback and is not intended for public hosting without authentication and operational hardening.
+## Architecture
 
-`merchant-records.json` must be an array matching:
-
-```json
-[{"orderId":"REAL_ORDER_ID","captureId":"REAL_CAPTURE_ID","merchantId":"REAL_PAYEE_MERCHANT_ID","customerId":"YOUR_INTERNAL_CUSTOMER_ID","shipmentId":"YOUR_SHIPMENT_ID","fulfillmentState":"LOST","observedAt":"2026-10-04T12:00:00.000Z"}]
+```
+Customer email ──► ARIA agent (LLM, fenced input)      ──► governed gateway
+                                                              │ propose_refund (typed, no credentials)
+                                                              ▼
+                     ┌──────────── Surety adjudication ─────────────┐
+                     │ claim extraction (schema-bound)               │
+                     │ relationship binding (order↔capture↔shipment) │
+                     │ premise verification (evidence contracts)     │
+                     │ policy engine (integer minor units)           │
+                     │ durable reservation + exact-action approval   │
+                     └───────────────┬───────────────────────────────┘
+                                     ▼
+                     PayPal sandbox REST (writes, idempotent)
+                     PayPal Agent Toolkit (reads: tracking, transactions)
+                     Webhooks (verified, reconcile hints)
+                                     ▼
+                     FactPack: versioned, digest-chained evidence record
 ```
 
-These are **merchant-reported records**, not independent carrier proof. Do not fabricate them for a real transaction. Sandbox experiments may use explicitly disclosed synthetic fulfillment attached to a real sandbox purchase.
-
-`npx tsx scripts/sandbox-order.ts` creates or checks a USD 1 sandbox order and prints its buyer approval link. It never prints an access token. The buyer approves with a sandbox personal account. Then `npx tsx scripts/sandbox-validate.ts` checks approval and runs a USD 1 capture/refund through Surety, explicitly using synthetic fulfillment and a manual typed claim. No production API host is supported.
-
-The adapter implements capture GET, order GET, refund POST with `PayPal-Request-Id`, and refund GET. Partially refunded or non-COMPLETED captures are refused because complete provider refund-history reconciliation is not yet implemented. Unknown write outcomes retain their reservation and require reconciliation; missing refund IDs require operator investigation, not automatic resubmission. Disputes and webhooks are not implemented.
-
-## Optional model extraction
-
-Set `OPENAI_API_KEY` and `OPENAI_MODEL` locally, then enable the AI checkbox. One request, 20-second timeout, strict JSON schema, no tools, no automatic retry. Invalid output, missing or conflicting references, refusal and network errors stop case creation. The original message and merchant/customer identity are supplied by the server; model-generated identity is not accepted. Fixture mode accepts only unchanged demonstration messages.
+Full details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), the threat model in [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), evidence contracts in [docs/CLAIMS.md](docs/CLAIMS.md).
 
 ## Repository map
 
-- `src/core`: binding, verification, policy, approvals and orchestration.
-- `src/db`: SQLite approvals, reservations and versioned snapshots.
-- `src/providers`: PayPal sandbox, simulation, structured claim extraction.
-- `src/server.ts`: local Express API and access boundaries.
-- `public`: responsive evidence docket.
-- `tests`: regression, concurrency, provider and HTTP checks.
-- `src/evaluation.ts`: synthetic four-baseline comparison; outputs to `artifacts/`.
-- `docs`: architecture, threat model, evidence contracts, evaluation, demo, Q&A and audit.
+- `src/core` — binding, verification, policy, approvals, orchestration, money
+- `src/agent` — ARIA runtime, governed gateway, adversarial inbox, SSE event bus
+- `src/providers` — PayPal sandbox adapter, Agent Toolkit reader, simulation, LLM providers
+- `src/db` — reservations, approvals, events (Node built-in `node:sqlite`)
+- `web` — React + Vite console (agent console, case inbox on AG Grid, review queue, policy studio, analytics, event log)
+- `tests` — 84 tests: security regressions, concurrency, cross-process races, provider contracts, agent scenarios, HTTP journeys
+- `scripts` — sandbox money loop, demo seeding
+- `docs` — architecture, threat model, evaluation, judge Q&A
 
-See [limitations](docs/LIMITATIONS.md), [execution ledger](docs/EXECUTION_LEDGER.md), and [final audit](docs/FINAL_AUDIT.md). The name is provisional; similarly named AI products exist. No trademark clearance is claimed.
+## What is real, and what is not
 
-License: ISC. Existing package license retained.
+Verified working: PayPal sandbox OAuth, order creation, buyer approval, capture, and refund through the adjudication path (see `artifacts/sandbox-loop.json`); Agent Toolkit reads (tracking, transactions, refunds); webhook intake with signature verification; live LLM claim extraction (structured output, server-validated).
+
+Explicitly not: real-money production use (sandbox only), independent carrier proof (delivery evidence is merchant-reported, and labeled as such), held-out security evaluation (the suite is synthetic and self-authored). LLM outputs can never execute payments — the deterministic engine is the only writer, and every write carries an idempotency key.
+
+## Deployment
+
+One-command local container: `docker build -t surety . && docker run -p 10000:10000 surety` — or deploy `render.yaml` to Render. Hosted mode adds session auth (operator/reviewer roles), rate limiting, and proxy trust automatically when `HOST` is non-loopback.
+
+## License
+
+ISC — see [LICENSE](LICENSE).
