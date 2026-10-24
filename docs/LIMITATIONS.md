@@ -1,18 +1,17 @@
-# Limitations and release blockers
+# Limitations — what is verified, and what is not
 
-1. No real sandbox refund has yet been observed. OAuth and order creation succeeded; buyer approval/capture/refund remain pending.
-2. No actual model inference has run. Fixture extraction is plainly labeled. OpenAI adapter has synthetic contract tests only. Paid credentials are deferred; no local model runtime was found.
-3. USD-only, single merchant prototype. Only trusted LOST non-delivery cases automate. Duplicate-charge/cancellation claims require review.
-4. Sandbox facts support unrefunded COMPLETED captures only. Complete external refund-history synchronization is not implemented.
-5. No webhooks, disputes, carrier API, signature-backed mandates or production PayPal endpoint.
-6. Unknown write outcomes with no refund ID need manual PayPal investigation. Reservations deliberately remain blocked; no background reconciliation worker exists.
-7. Approval and reservation tables span adjacent synchronous steps. A crash can strand an approval or reservation, but the write cannot occur before reservation. Recovery is conservative, not seamless.
-8. Case snapshots are append-only by convention and hashed, not immutable or signed. New exports include the approval lifecycle; prior case versions are retained in SQLite rather than bundled in the download.
-9. Merchant fulfillment is merchant-reported. A malicious or mistaken merchant can poison evidence. No independent delivery claim.
-10. Synthetic evaluation is self-authored; independent held-out evaluation is missing.
-11. Local loopback binding and bearer credentials are not production multi-tenant authentication. No public deployment is claimed.
-12. No public repository, recorded video, Devpost submission or external user validation has been produced in this run.
-13. Surety is a provisional name: another AI-delivery-assurance product uses the name. No trademark clearance.
-14. UI performance on low-powered real devices, screen-reader testing and complete reduced-motion emulation remain unverified. Audit script is heuristic, not accessibility certification.
+Honest accounting as of 2026-10-24. Verified claims live in docs/FINAL_AUDIT.md and the committed artifacts; this file lists the boundaries.
 
-Do not publish this as a complete hackathon submission or a production security product until the relevant blockers are resolved.
+1. Sandbox refund: OAuth, order creation, buyer approval, capture, and refund through the adjudication path have been exercised via `scripts/sandbox-loop.ts`; keep `artifacts/sandbox-loop.json` as the evidence record for the specific run. Re-run it to reproduce.
+2. Live LLM inference: implemented (Gemini/Groq/OpenAI structured output, server-validated) with synthetic contract tests; runs whenever an API key is configured. The deterministic fallback brain is used in its absence and is plainly labeled in the UI.
+3. Automated claim contracts: NOT_DELIVERED (fresh LOST), DUPLICATE_CHARGE (two same-amount captures), ALREADY_REFUNDED (prior refund blocks), WRONG_AMOUNT (capture vs order). DAMAGED_ITEM / NOT_AS_DESCRIBED / CANCELLATION deliberately require human review.
+4. Refund-history reconciliation: partially refunded or non-COMPLETED captures are refused rather than guessed. Webhook events trigger reconciliation but never authorize state changes by themselves.
+5. Disputes, payouts, subscriptions: not implemented. The Agent Toolkit reader exposes dispute reads only.
+6. Unknown write outcomes retain their reservation and require operator investigation with the stored request ID; no automatic resubmission, no background reconciliation worker.
+7. A crash between adjacent synchronous steps can strand an approval or reservation; recovery is conservative (fail-closed), not seamless.
+8. Case snapshots are append-only and hashed, not cryptographically signed. Digests bind approvals to exact action/claim/evidence/policy state but do not prove external truth.
+9. Fulfillment evidence is merchant-reported (PayPal tracking or OMS), provenance-labeled in every FactPack. A mistaken or malicious merchant can poison it; no independent carrier proof is claimed.
+10. The 84-case evaluation is synthetic and self-authored, with deterministic claim typing to isolate governance from extraction quality. The ungoverned baseline is a modeled LLM-discretion agent, not a specific product. Not held out; not production security evidence.
+11. Hosted mode adds session auth, rate limiting, and proxy trust; this is a demo deployment, not multi-tenant production hardening. PayPal writes are sandbox-only by construction (no production host is configured anywhere).
+12. "Surety" is a provisional name with known collisions; no trademark clearance.
+13. Screen-reader and low-powered-device testing remain unverified; keyboard navigation, focus states, and reduced-motion handling are implemented but not professionally audited.
