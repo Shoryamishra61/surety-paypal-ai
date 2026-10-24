@@ -19,7 +19,11 @@ export default function PolicyStudio() {
       .catch((e: Error) => setError(e.message));
   }, []);
 
-  function updateCurrency(index: number, field: keyof PolicyConfigWire['currencies'][number], value: string) {
+  function updateCurrency(
+    index: number,
+    field: keyof PolicyConfigWire['currencies'][number],
+    value: string,
+  ) {
     setConfig((previous) => {
       if (!previous) return previous;
       const currencies = previous.currencies.map((entry, i) =>
@@ -66,7 +70,11 @@ export default function PolicyStudio() {
           }}
         >
           {config.currencies.map((entry, index) => (
-            <fieldset key={entry.currency} className="currency-block" style={{ border: 0, padding: 0, margin: 0 }}>
+            <fieldset
+              key={entry.currency}
+              className="currency-block"
+              style={{ border: 0, padding: 0, margin: 0 }}
+            >
               <h3>{entry.currency}</h3>
               <div className="currency-fields">
                 <label className="field">
@@ -76,7 +84,9 @@ export default function PolicyStudio() {
                     min="0"
                     step="0.01"
                     value={entry.maxAutonomousRefundAmount}
-                    onChange={(e) => updateCurrency(index, 'maxAutonomousRefundAmount', e.target.value)}
+                    onChange={(e) =>
+                      updateCurrency(index, 'maxAutonomousRefundAmount', e.target.value)
+                    }
                   />
                 </label>
                 <label className="field">
@@ -114,7 +124,9 @@ export default function PolicyStudio() {
           </div>
           <p className="stat-label" style={{ marginTop: 'var(--s4)' }}>
             Policy version <code>{config.version}</code> ·{' '}
-            {config.alwaysRequireApproval ? 'Human approval always required' : 'Verified claims automate within caps'}
+            {config.alwaysRequireApproval
+              ? 'Human approval always required'
+              : 'Verified claims automate within caps'}
           </p>
         </form>
       )}

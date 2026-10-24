@@ -10,8 +10,17 @@ import type { AgentRunSummary, InboxMessageView, SuretyEventWire } from '../lib/
 import { EmptyState, ErrorLine, Loading, Pill, SectionHeading } from '../components/ui';
 
 const RUNNABLE_IDS = [
-  'msg-001', 'msg-002', 'msg-003', 'msg-004', 'msg-005',
-  'msg-006', 'msg-007', 'msg-008', 'msg-009', 'msg-010', 'msg-011',
+  'msg-001',
+  'msg-002',
+  'msg-003',
+  'msg-004',
+  'msg-005',
+  'msg-006',
+  'msg-007',
+  'msg-008',
+  'msg-009',
+  'msg-010',
+  'msg-011',
 ];
 
 export default function AgentConsole() {
@@ -30,7 +39,10 @@ export default function AgentConsole() {
       .catch((e: Error) => setError(e.message));
   }, []);
 
-  useEffect(() => subscribeToEvents((event) => setEvents((previous) => [...previous.slice(-199), event])), []);
+  useEffect(
+    () => subscribeToEvents((event) => setEvents((previous) => [...previous.slice(-199), event])),
+    [],
+  );
 
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight });
@@ -40,7 +52,9 @@ export default function AgentConsole() {
 
   const runSummaryLine = useMemo(() => {
     if (!summary) return null;
-    const refunded = summary.outcomes.filter((o) => o.proposal?.executionState === 'SUCCEEDED').length;
+    const refunded = summary.outcomes.filter(
+      (o) => o.proposal?.executionState === 'SUCCEEDED',
+    ).length;
     const blocked = summary.outcomes.filter((o) => o.proposal?.decision === 'DENY').length;
     const review = summary.outcomes.filter((o) => o.proposal?.decision === 'REVIEW').length;
     const escalated = summary.outcomes.filter((o) => o.action === 'escalate_human').length;
@@ -87,7 +101,9 @@ export default function AgentConsole() {
           <div className="panel-head">
             <h2>Support inbox</h2>
             <span className="panel-meta">
-              {aiLive ? 'LLM brain · live' : 'Deterministic brain (add an AI key for the LLM brain)'}
+              {aiLive
+                ? 'LLM brain · live'
+                : 'Deterministic brain (add an AI key for the LLM brain)'}
             </span>
           </div>
           {error && <ErrorLine message={error} />}
@@ -106,7 +122,9 @@ export default function AgentConsole() {
                       <span className="inbox-from">{message.from}</span>
                       <span className="inbox-subject">{message.subject}</span>
                       <span className="inbox-preview">{message.body}</span>
-                      {message.orderHint && <span className="inbox-order mono">{message.orderHint}</span>}
+                      {message.orderHint && (
+                        <span className="inbox-order mono">{message.orderHint}</span>
+                      )}
                     </span>
                   </label>
                 </li>
@@ -114,8 +132,14 @@ export default function AgentConsole() {
             </ul>
           )}
           <div className="run-controls">
-            <button className="btn btn-primary" onClick={run} disabled={running || selected.size === 0}>
-              {running ? 'Agent working…' : `Run agent on ${selected.size} message${selected.size === 1 ? '' : 's'}`}
+            <button
+              className="btn btn-primary"
+              onClick={run}
+              disabled={running || selected.size === 0}
+            >
+              {running
+                ? 'Agent working…'
+                : `Run agent on ${selected.size} message${selected.size === 1 ? '' : 's'}`}
             </button>
             <button
               className="btn"
@@ -151,16 +175,22 @@ export default function AgentConsole() {
                     <dl className="ledger compact">
                       <div>
                         <dt>Amount</dt>
-                        <dd className="num">{formatMoney(outcome.proposal.amount, outcome.proposal.currency)}</dd>
+                        <dd className="num">
+                          {formatMoney(outcome.proposal.amount, outcome.proposal.currency)}
+                        </dd>
                       </div>
                       <div>
                         <dt>Reasons</dt>
-                        <dd className="mono">{outcome.proposal.reasonCodes.slice(0, 3).join(', ')}</dd>
+                        <dd className="mono">
+                          {outcome.proposal.reasonCodes.slice(0, 3).join(', ')}
+                        </dd>
                       </div>
                     </dl>
                   )}
                   {outcome.proposal?.injectionSuspected && (
-                    <p className="injection-flag">Instruction-shaped content flagged; adjudicated under standard evidence rules.</p>
+                    <p className="injection-flag">
+                      Instruction-shaped content flagged; adjudicated under standard evidence rules.
+                    </p>
                   )}
                 </li>
               ))}
@@ -170,7 +200,9 @@ export default function AgentConsole() {
         <section aria-label="Live trace" className="trace-panel">
           <div className="panel-head">
             <h2>Live trace</h2>
-            <span className="panel-meta">{events.length > 0 ? `${events.length} events` : 'streaming'}</span>
+            <span className="panel-meta">
+              {events.length > 0 ? `${events.length} events` : 'streaming'}
+            </span>
           </div>
           <div className="trace-feed" ref={feedRef} aria-live="polite">
             {events.length === 0 && (
@@ -193,15 +225,29 @@ function TraceLine({ event }: { event: SuretyEventWire }) {
   const meta = (() => {
     switch (event.type) {
       case 'gateway.case.executed':
-        return { tone: 'go' as const, detail: `${String(event.payload.executionState ?? '')} ${event.payload.refundId ? `· ${String(event.payload.refundId)}` : ''}` };
+        return {
+          tone: 'go' as const,
+          detail: `${String(event.payload.executionState ?? '')} ${event.payload.refundId ? `· ${String(event.payload.refundId)}` : ''}`,
+        };
       case 'gateway.case.denied':
-        return { tone: 'stop' as const, detail: Array.isArray(event.payload.reasonCodes) ? (event.payload.reasonCodes as string[]).slice(0, 2).join(', ') : '' };
+        return {
+          tone: 'stop' as const,
+          detail: Array.isArray(event.payload.reasonCodes)
+            ? (event.payload.reasonCodes as string[]).slice(0, 2).join(', ')
+            : '',
+        };
       case 'gateway.case.review':
         return { tone: 'hold' as const, detail: 'Routed to the review queue' };
       case 'agent.thought':
-        return { tone: 'neutral' as const, detail: String(event.payload.thought ?? '').slice(0, 140) };
+        return {
+          tone: 'neutral' as const,
+          detail: String(event.payload.thought ?? '').slice(0, 140),
+        };
       case 'agent.message.read':
-        return { tone: 'neutral' as const, detail: `${String(event.payload.from ?? '')} — ${String(event.payload.subject ?? '')}` };
+        return {
+          tone: 'neutral' as const,
+          detail: `${String(event.payload.from ?? '')} — ${String(event.payload.subject ?? '')}`,
+        };
       case 'system.notice':
         return { tone: 'hold' as const, detail: String(event.payload.message ?? '') };
       default:

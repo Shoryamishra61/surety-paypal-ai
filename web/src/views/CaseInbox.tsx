@@ -96,7 +96,14 @@ export default function CaseInbox() {
         flex: 1.4,
         minWidth: 160,
       },
-      { headerName: 'Claim', field: 'claim', sortable: true, filter: true, flex: 1.2, minWidth: 140 },
+      {
+        headerName: 'Claim',
+        field: 'claim',
+        sortable: true,
+        filter: true,
+        flex: 1.2,
+        minWidth: 140,
+      },
       {
         headerName: 'Amount',
         field: 'amount',

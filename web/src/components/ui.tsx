@@ -2,11 +2,25 @@
 
 import type { ReactNode } from 'react';
 
-export function Pill({ tone, children }: { tone: 'go' | 'stop' | 'hold' | 'neutral'; children: ReactNode }) {
+export function Pill({
+  tone,
+  children,
+}: {
+  tone: 'go' | 'stop' | 'hold' | 'neutral';
+  children: ReactNode;
+}) {
   return <span className={`pill pill-${tone}`}>{children}</span>;
 }
 
-export function SectionHeading({ eyebrow, title, lede }: { eyebrow: string; title: string; lede?: string }) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  lede,
+}: {
+  eyebrow: string;
+  title: string;
+  lede?: string;
+}) {
   return (
     <header className="view-head">
       <p className="eyebrow">{eyebrow}</p>
@@ -26,7 +40,11 @@ export function EmptyState({ title, hint }: { title: string; hint: string }) {
 }
 
 export function Loading({ label = 'Loading' }: { label?: string }) {
-  return <p className="loading" role="status">{label}…</p>;
+  return (
+    <p className="loading" role="status">
+      {label}…
+    </p>
+  );
 }
 
 export function ErrorLine({ message }: { message: string }) {

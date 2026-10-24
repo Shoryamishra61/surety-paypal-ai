@@ -78,21 +78,30 @@ export default function Analytics() {
           <div className="bar-row">
             <span className="stat-label">Executed</span>
             <div className="bar-track">
-              <div className="bar-fill tone-go" style={{ width: `${pct(stats.succeeded, stats.total)}%` }} />
+              <div
+                className="bar-fill tone-go"
+                style={{ width: `${pct(stats.succeeded, stats.total)}%` }}
+              />
             </div>
             <span className="bar-value">{stats.succeeded}</span>
           </div>
           <div className="bar-row">
             <span className="stat-label">Blocked</span>
             <div className="bar-track">
-              <div className="bar-fill tone-stop" style={{ width: `${pct(stats.denied, stats.total)}%` }} />
+              <div
+                className="bar-fill tone-stop"
+                style={{ width: `${pct(stats.denied, stats.total)}%` }}
+              />
             </div>
             <span className="bar-value">{stats.denied}</span>
           </div>
           <div className="bar-row">
             <span className="stat-label">Review</span>
             <div className="bar-track">
-              <div className="bar-fill tone-hold" style={{ width: `${pct(stats.review, stats.total)}%` }} />
+              <div
+                className="bar-fill tone-hold"
+                style={{ width: `${pct(stats.review, stats.total)}%` }}
+              />
             </div>
             <span className="bar-value">{stats.review}</span>
           </div>

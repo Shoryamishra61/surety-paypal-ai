@@ -65,7 +65,9 @@ export default function EventLog() {
                 <td className="num">{event.resource_id ?? '—'}</td>
                 <td>
                   <Pill tone={event.verification === 'SIGNATURE_VERIFIED' ? 'go' : 'hold'}>
-                    {event.verification === 'SIGNATURE_VERIFIED' ? 'Signature verified' : 'Unverified'}
+                    {event.verification === 'SIGNATURE_VERIFIED'
+                      ? 'Signature verified'
+                      : 'Unverified'}
                   </Pill>
                 </td>
               </tr>
@@ -76,7 +78,10 @@ export default function EventLog() {
       <h2 style={{ fontSize: '1.2rem', margin: 'var(--s5) 0 var(--s2)' }}>Recent agent activity</h2>
       {!agentEvents && !error && <Loading label="Loading agent events" />}
       {agentEvents && agentEvents.length === 0 && (
-        <EmptyState title="No agent activity yet." hint="Run the agent from the console; every step is persisted here." />
+        <EmptyState
+          title="No agent activity yet."
+          hint="Run the agent from the console; every step is persisted here."
+        />
       )}
       {agentEvents && agentEvents.length > 0 && (
         <table className="event-table">
@@ -105,6 +110,11 @@ export default function EventLog() {
 }
 
 function summarizePayload(payload: Record<string, unknown>): string {
-  const text = (payload.thought ?? payload.message ?? payload.subject ?? payload.decision ?? payload.executionState ?? '') as string;
+  const text = (payload.thought ??
+    payload.message ??
+    payload.subject ??
+    payload.decision ??
+    payload.executionState ??
+    '') as string;
   return String(text).slice(0, 120) || Object.keys(payload).slice(0, 3).join(', ');
 }

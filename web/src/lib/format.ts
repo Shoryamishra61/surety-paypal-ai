@@ -1,7 +1,13 @@
 // Ledger formatting: money, time, and verdict labels.
 
 const CURRENCY_EXPONENTS: Record<string, number> = {
-  USD: 2, EUR: 2, GBP: 2, CAD: 2, AUD: 2, JPY: 0, KRW: 0,
+  USD: 2,
+  EUR: 2,
+  GBP: 2,
+  CAD: 2,
+  AUD: 2,
+  JPY: 0,
+  KRW: 0,
 };
 
 export function formatMoney(amount: number, currency: string): string {
@@ -20,8 +26,11 @@ export function formatTime(iso: string): string {
 
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString([], {
-    year: 'numeric', month: 'short', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -36,7 +45,10 @@ export const CLAIM_LABELS: Record<string, string> = {
   OTHER: 'Other',
 };
 
-export const DECISION_META: Record<string, { label: string; tone: 'go' | 'stop' | 'hold' | 'neutral' }> = {
+export const DECISION_META: Record<
+  string,
+  { label: string; tone: 'go' | 'stop' | 'hold' | 'neutral' }
+> = {
   EXECUTE: { label: 'Safe to refund', tone: 'go' },
   EXECUTED: { label: 'Refunded', tone: 'go' },
   SUCCEEDED: { label: 'Refunded', tone: 'go' },

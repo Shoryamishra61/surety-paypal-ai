@@ -42,7 +42,9 @@ export default function App() {
       </a>
       <header className="masthead">
         <div className="masthead-inner">
-          <a className="wordmark" href="#/">Surety</a>
+          <a className="wordmark" href="#/">
+            Surety
+          </a>
           <p className="tagline">Premise-bound execution for payment agents</p>
           <div className="masthead-status" aria-live="polite">
             {configError && <span className="pill pill-stop">{configError}</span>}

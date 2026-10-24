@@ -21,7 +21,9 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
   if (error) return <ErrorLine message={error} />;
   if (!record) return <Loading label="Loading case" />;
 
-  const decision = decisionMeta(record.executionState === 'NOT_EXECUTED' ? record.decision : record.executionState);
+  const decision = decisionMeta(
+    record.executionState === 'NOT_EXECUTED' ? record.decision : record.executionState,
+  );
 
   return (
     <>
@@ -44,7 +46,9 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
             <div>
               <dt>Proposed refund</dt>
               <dd>
-                <span className="num">{formatMoney(record.action.amount, record.action.currency)}</span>{' '}
+                <span className="num">
+                  {formatMoney(record.action.amount, record.action.currency)}
+                </span>{' '}
                 by {record.agentId ?? 'a human operator'}
                 {record.agentId && <span className="stat-label"> (agent)</span>}
               </dd>
@@ -65,9 +69,18 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
             <div>
               <dt>Reasons</dt>
               <dd>
-                <code>{[...record.verification.reasonCodes, ...record.policy.reasonCodes].join(', ') || '—'}</code>
+                <code>
+                  {[...record.verification.reasonCodes, ...record.policy.reasonCodes].join(', ') ||
+                    '—'}
+                </code>
                 {record.policy.violations.length > 0 && (
-                  <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.1rem', color: 'var(--stop-ink)' }}>
+                  <ul
+                    style={{
+                      margin: '0.5rem 0 0',
+                      paddingLeft: '1.1rem',
+                      color: 'var(--stop-ink)',
+                    }}
+                  >
                     {record.policy.violations.map((violation) => (
                       <li key={violation}>{violation}</li>
                     ))}
@@ -132,7 +145,8 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
               <dd>
                 {record.verification.relationshipBinding.graph.map((node) => (
                   <div key={`${node.type}-${node.providerId}`} className="stat-label">
-                    {node.type} ← {node.parentId ?? 'root'} · <code>{node.providerId}</code> ({node.state})
+                    {node.type} ← {node.parentId ?? 'root'} · <code>{node.providerId}</code> (
+                    {node.state})
                   </div>
                 ))}
               </dd>
@@ -151,7 +165,9 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
               <dt>Policy version</dt>
               <dd>
                 <code>{record.policy.policyVersion}</code> · autonomous cap{' '}
-                <span className="num">{formatMoney(record.policy.maxAutonomousAmount, record.action.currency)}</span>
+                <span className="num">
+                  {formatMoney(record.policy.maxAutonomousAmount, record.action.currency)}
+                </span>
               </dd>
             </div>
             <div>

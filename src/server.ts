@@ -124,7 +124,7 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
 
     res.setHeader(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'",
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'",
     );
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
@@ -296,7 +296,9 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
       .strict()
       .parse(req.body);
     service.policy.updateConfig({
-      ...('alwaysRequireApproval' in input ? { alwaysRequireApproval: input.alwaysRequireApproval } : {}),
+      ...('alwaysRequireApproval' in input
+        ? { alwaysRequireApproval: input.alwaysRequireApproval }
+        : {}),
       currencies: input.currencies,
     });
     res.json(service.policy.getConfig());

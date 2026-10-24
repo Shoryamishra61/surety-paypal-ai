@@ -50,7 +50,11 @@ export default function ReviewQueue() {
         lede="These proposals passed premise verification but exceed autonomous limits or carry subjective claims. Approving executes the exact action shown — nothing more."
       />
       {error && <ErrorLine message={error} />}
-      {notice && <p className="save-note" role="status">{notice}</p>}
+      {notice && (
+        <p className="save-note" role="status">
+          {notice}
+        </p>
+      )}
       {!cases && !error && <Loading label="Loading queue" />}
       {cases && pending.length === 0 && (
         <EmptyState
@@ -74,8 +78,11 @@ export default function ReviewQueue() {
             <div>
               <dt>Exact action</dt>
               <dd>
-                Refund <span className="num">{formatMoney(record.action.amount, record.action.currency)}</span> to{' '}
-                <code>{record.action.customerId}</code>
+                Refund{' '}
+                <span className="num">
+                  {formatMoney(record.action.amount, record.action.currency)}
+                </span>{' '}
+                to <code>{record.action.customerId}</code>
               </dd>
             </div>
             <div>
@@ -97,7 +104,9 @@ export default function ReviewQueue() {
               disabled={busy === record.caseId}
               onClick={() => approve(record.caseId)}
             >
-              {busy === record.caseId ? 'Executing…' : `Approve ${formatMoney(record.action.amount, record.action.currency)}`}
+              {busy === record.caseId
+                ? 'Executing…'
+                : `Approve ${formatMoney(record.action.amount, record.action.currency)}`}
             </button>
             <a className="btn" href={`#/cases/${record.caseId}`}>
               Inspect evidence
