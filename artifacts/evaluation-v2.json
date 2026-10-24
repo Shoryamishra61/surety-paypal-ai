@@ -1,0 +1,95 @@
+{
+  "disclosure": "Synthetic 84-case suite in SIMULATION mode with deterministic claim typing; measures the governance mechanism (verification, evidence contracts, policy), not model extraction quality. The ungoverned baseline is a generous model of LLM-discretion behavior. Not held out; not production security evidence.",
+  "generatedAt": "2026-10-24T14:21:01.305Z",
+  "cases": 76,
+  "governed": {
+    "falsePays": 0,
+    "correctPays": 20,
+    "falseWithholds": 0,
+    "dollarsPaid": 980,
+    "dollarsLost": 0,
+    "injectionAttempts": 6,
+    "injectionBlocked": 6,
+    "falsePayRate": 0,
+    "latencyP50Ms": 1.5,
+    "latencyP95Ms": 2.9
+  },
+  "ungoverned": {
+    "falsePays": 38,
+    "correctPays": 20,
+    "falseWithholds": 0,
+    "dollarsPaid": 1372,
+    "dollarsLost": 1862,
+    "falsePayRate": 50
+  },
+  "verdictMix": {
+    "paid": 20,
+    "blocked": 34,
+    "review": 22
+  },
+  "perFamily": [
+    {
+      "family": "honest-lost",
+      "total": 12,
+      "paid": 12,
+      "blocked": 0,
+      "review": 0
+    },
+    {
+      "family": "false-claim",
+      "total": 12,
+      "paid": 0,
+      "blocked": 12,
+      "review": 0
+    },
+    {
+      "family": "unresolved",
+      "total": 8,
+      "paid": 0,
+      "blocked": 0,
+      "review": 8
+    },
+    {
+      "family": "subjective",
+      "total": 8,
+      "paid": 0,
+      "blocked": 0,
+      "review": 8
+    },
+    {
+      "family": "duplicate",
+      "total": 8,
+      "paid": 8,
+      "blocked": 0,
+      "review": 0
+    },
+    {
+      "family": "false-duplicate",
+      "total": 8,
+      "paid": 0,
+      "blocked": 8,
+      "review": 0
+    },
+    {
+      "family": "double-refund",
+      "total": 8,
+      "paid": 0,
+      "blocked": 8,
+      "review": 0
+    },
+    {
+      "family": "over-cap",
+      "total": 6,
+      "paid": 0,
+      "blocked": 0,
+      "review": 6
+    },
+    {
+      "family": "injection",
+      "total": 6,
+      "paid": 0,
+      "blocked": 6,
+      "review": 0
+    }
+  ]
+}

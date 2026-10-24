@@ -49,7 +49,7 @@ export interface ProposalOutcome {
 export class GovernedGateway {
   constructor(
     private service: Surety,
-    private extractor: ClaimExtractor,
+    private extractor: ClaimExtractor | null,
     private records: MerchantRecord[],
     private bus: EventBus,
   ) {}
@@ -77,6 +77,8 @@ export class GovernedGateway {
       };
       extractionMode = 'MANUAL';
     } else {
+      if (!this.extractor)
+        throw new Error('No claim extractor configured; supply claimType or configure an LLM provider');
       claim = await this.extractor.extract(input.statement, record);
       extractionMode = 'MODEL';
     }
