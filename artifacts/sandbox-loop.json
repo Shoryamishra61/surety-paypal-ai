@@ -1,0 +1,198 @@
+{
+  "disclosure": "Real PayPal sandbox order, capture, and refund API calls. Fulfillment record and typed claim are disclosed synthetic inputs; no LLM inference in this script.",
+  "at": "2026-10-24T20:31:56.229Z",
+  "order": {
+    "id": "8FN73134051605642",
+    "status": "COMPLETED"
+  },
+  "capture": {
+    "id": "8JC76331TM5393407",
+    "amount": {
+      "currency_code": "USD",
+      "value": "1.00"
+    }
+  },
+  "case": {
+    "caseId": "c3e46339-36f8-4ca1-b82b-2efac4d5b672",
+    "claimSchemaVersion": "1",
+    "extractionMode": "MANUAL",
+    "version": 3,
+    "action": {
+      "actionType": "REFUND",
+      "captureId": "8JC76331TM5393407",
+      "orderId": "8FN73134051605642",
+      "amount": 1,
+      "currency": "USD",
+      "merchantId": "5HW6G2JLYUBZJ",
+      "customerId": "SYNTHETIC-SANDBOX-BUYER",
+      "reason": "Sandbox loop validation with synthetic LOST fulfillment"
+    },
+    "claim": {
+      "claimType": "NOT_DELIVERED",
+      "orderReference": "8FN73134051605642",
+      "captureReference": "8JC76331TM5393407",
+      "customerId": "SYNTHETIC-SANDBOX-BUYER",
+      "merchantId": "5HW6G2JLYUBZJ",
+      "rawStatement": "Synthetic sandbox validation: shipment lost",
+      "extractedAmount": 1,
+      "extractedCurrency": "USD",
+      "confidence": 0
+    },
+    "evidence": [
+      {
+        "evidenceId": "capture:8JC76331TM5393407",
+        "provider": "PAYPAL",
+        "providerId": "8JC76331TM5393407",
+        "parentId": "8FN73134051605642",
+        "recordType": "capture",
+        "state": "COMPLETED",
+        "timestamp": "2026-10-24T20:31:51Z",
+        "data": {
+          "amount": 1,
+          "currency": "USD"
+        },
+        "provenance": "PayPal sandbox capture and order GET (USD 1.00); timestamp is capture update_time"
+      },
+      {
+        "evidenceId": "order:8FN73134051605642",
+        "provider": "MERCHANT_OMS",
+        "providerId": "8FN73134051605642",
+        "parentId": null,
+        "recordType": "order",
+        "state": "RECORDED",
+        "timestamp": "2026-10-24T20:31:50.891Z",
+        "data": {
+          "merchantId": "5HW6G2JLYUBZJ",
+          "customerId": "SYNTHETIC-SANDBOX-BUYER"
+        },
+        "provenance": "Merchant-reported OMS record; not independent delivery proof"
+      },
+      {
+        "evidenceId": "shipment:SYNTHETIC-SANDBOX-LOST",
+        "provider": "MERCHANT_OMS",
+        "providerId": "SYNTHETIC-SANDBOX-LOST",
+        "parentId": "8FN73134051605642",
+        "recordType": "shipment",
+        "state": "LOST",
+        "timestamp": "2026-10-24T20:31:50.891Z",
+        "data": {},
+        "provenance": "Merchant-reported fulfillment; freshness limit 24 hours"
+      }
+    ],
+    "verification": {
+      "verdict": "VERIFIED",
+      "decision": "EXECUTE",
+      "reasonCodes": [
+        "SHIPMENT_LOST",
+        "SOURCE:MERCHANT_OMS"
+      ],
+      "unresolvedFacts": [],
+      "evidenceUsed": [
+        {
+          "evidenceId": "capture:8JC76331TM5393407",
+          "provider": "PAYPAL",
+          "providerId": "8JC76331TM5393407",
+          "parentId": "8FN73134051605642",
+          "recordType": "capture",
+          "state": "COMPLETED",
+          "timestamp": "2026-10-24T20:31:51Z",
+          "data": {
+            "amount": 1,
+            "currency": "USD"
+          },
+          "provenance": "PayPal sandbox capture and order GET (USD 1.00); timestamp is capture update_time"
+        },
+        {
+          "evidenceId": "order:8FN73134051605642",
+          "provider": "MERCHANT_OMS",
+          "providerId": "8FN73134051605642",
+          "parentId": null,
+          "recordType": "order",
+          "state": "RECORDED",
+          "timestamp": "2026-10-24T20:31:50.891Z",
+          "data": {
+            "merchantId": "5HW6G2JLYUBZJ",
+            "customerId": "SYNTHETIC-SANDBOX-BUYER"
+          },
+          "provenance": "Merchant-reported OMS record; not independent delivery proof"
+        },
+        {
+          "evidenceId": "shipment:SYNTHETIC-SANDBOX-LOST",
+          "provider": "MERCHANT_OMS",
+          "providerId": "SYNTHETIC-SANDBOX-LOST",
+          "parentId": "8FN73134051605642",
+          "recordType": "shipment",
+          "state": "LOST",
+          "timestamp": "2026-10-24T20:31:50.891Z",
+          "data": {},
+          "provenance": "Merchant-reported fulfillment; freshness limit 24 hours"
+        }
+      ],
+      "relationshipBinding": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "graph": [
+          {
+            "id": "8JC76331TM5393407",
+            "type": "capture",
+            "provider": "PAYPAL",
+            "providerId": "8JC76331TM5393407",
+            "parentId": "8FN73134051605642",
+            "state": "COMPLETED",
+            "metadata": {
+              "amount": 1,
+              "currency": "USD"
+            }
+          },
+          {
+            "id": "8FN73134051605642",
+            "type": "order",
+            "provider": "MERCHANT_OMS",
+            "providerId": "8FN73134051605642",
+            "parentId": null,
+            "state": "RECORDED",
+            "metadata": {
+              "merchantId": "5HW6G2JLYUBZJ",
+              "customerId": "SYNTHETIC-SANDBOX-BUYER"
+            }
+          },
+          {
+            "id": "SYNTHETIC-SANDBOX-LOST",
+            "type": "shipment",
+            "provider": "MERCHANT_OMS",
+            "providerId": "SYNTHETIC-SANDBOX-LOST",
+            "parentId": "8FN73134051605642",
+            "state": "LOST",
+            "metadata": {}
+          }
+        ]
+      },
+      "claimType": "NOT_DELIVERED",
+      "policyVersion": "2.0.0"
+    },
+    "policy": {
+      "permitted": true,
+      "requiresApproval": false,
+      "reasonCodes": [],
+      "maxAutonomousAmount": 50,
+      "remainingRefundable": 1,
+      "policyVersion": "2.0.0",
+      "violations": []
+    },
+    "decision": "EXECUTE",
+    "mode": "PAYPAL_SANDBOX",
+    "agentId": null,
+    "injectionSuspected": false,
+    "executionState": "SUCCEEDED",
+    "approvalId": null,
+    "refundId": "4LE80218GR4277626",
+    "requestId": "d17ee771f0d42a3a83ffe1f94ba277869ebe11",
+    "evidenceDigest": "ea2353c1d9e45b8afb4d70bb034a463032a20ef9ee6040d421c277cf778befbf",
+    "policyDigest": "20e13d1823d869cf504e849cdf8f09188cbd5e3f1d9636664262ec7312e3c263",
+    "createdAt": "2026-10-24T20:31:52.686Z",
+    "error": null,
+    "previousVersion": 2,
+    "updatedAt": "2026-10-24T20:31:56.226Z"
+  }
+}
