@@ -1,0 +1,463 @@
+/* Surety console — view styles: panels, inbox, trace, ledgers, grids.
+   Hairlines and typography carry the structure; verdict colors only
+   where a decision exists. */
+
+.view-head {
+  margin-bottom: var(--s5);
+}
+
+.view-head .lede {
+  margin-top: var(--s3);
+}
+
+/* ── Panels (ruled, not boxed) ─────────────────────────────── */
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: var(--s2);
+  margin-bottom: var(--s2);
+}
+
+.panel-head h2 {
+  font-size: 1.15rem;
+}
+
+.panel-meta {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.console-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--s6);
+  align-items: start;
+}
+
+@media (max-width: 64rem) {
+  .console-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Inbox ─────────────────────────────────────────────────── */
+
+.inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.inbox-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  align-items: start;
+}
+
+.inbox-row:hover .inbox-subject {
+  color: var(--ink);
+}
+
+.inbox-row input {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.2rem;
+  accent-color: var(--ink);
+}
+
+.inbox-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.inbox-from {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+}
+
+.inbox-subject {
+  font-weight: 600;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.inbox-preview {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.inbox-order {
+  font-size: 0.8125rem;
+  color: var(--agent);
+}
+
+.run-controls {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s4);
+  flex-wrap: wrap;
+}
+
+.run-summary {
+  margin: var(--s3) 0 0;
+  border-top: 1px solid var(--rule);
+  padding-top: var(--s3);
+  font-weight: 600;
+}
+
+/* ── Outcomes ──────────────────────────────────────────────── */
+
+.outcome-list {
+  list-style: none;
+  margin: var(--s4) 0 0;
+  padding: 0;
+}
+
+.outcome-row {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.outcome-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.outcome-thought {
+  margin: var(--s2) 0;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.injection-flag {
+  font-size: 0.875rem;
+  color: var(--hold-ink);
+  border-left: 2px solid var(--hold);
+  padding-left: var(--s3);
+  margin: var(--s2) 0 0;
+}
+
+dl.ledger.compact > div {
+  display: grid;
+  grid-template-columns: minmax(6rem, 9rem) minmax(0, 1fr);
+  gap: var(--s2);
+  padding: 0.2rem 0;
+}
+
+dl.ledger.compact dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+dl.ledger.compact dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ── Live trace ────────────────────────────────────────────── */
+
+.trace-panel {
+  position: sticky;
+  top: var(--s4);
+}
+
+.trace-feed {
+  max-height: 34rem;
+  overflow-y: auto;
+  border-top: 1px solid var(--rule);
+}
+
+.trace-line {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(7rem, 10rem) minmax(0, 1fr);
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.875rem;
+  align-items: baseline;
+}
+
+.trace-time {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+}
+
+.trace-label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.trace-detail {
+  color: var(--ink-2);
+  min-width: 0;
+}
+
+.trace-line.tone-go .trace-label {
+  color: var(--go-ink);
+}
+
+.trace-line.tone-stop .trace-label {
+  color: var(--stop-ink);
+}
+
+.trace-line.tone-hold .trace-label {
+  color: var(--hold-ink);
+}
+
+/* ── Empty / loading / error ───────────────────────────────── */
+
+.empty-state {
+  padding: var(--s6) 0;
+}
+
+.empty-title {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  margin: 0 0 var(--s2);
+}
+
+.empty-hint {
+  margin: 0;
+  color: var(--ink-3);
+  max-width: 34rem;
+}
+
+.loading {
+  color: var(--ink-3);
+}
+
+.error-line {
+  color: var(--stop-ink);
+  margin: var(--s2) 0;
+}
+
+/* ── Case detail ───────────────────────────────────────────── */
+
+.case-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s6);
+  align-items: start;
+}
+
+@media (max-width: 64rem) {
+  .case-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.evidence-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.evidence-id {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
+.evidence-provenance {
+  font-size: 0.8125rem;
+  color: var(--ink-3);
+  margin: var(--s1) 0 0;
+}
+
+.statement-quote {
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  border-left: 2px solid var(--ink);
+  padding: var(--s2) var(--s4);
+  margin: var(--s3) 0;
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--s4);
+  color: var(--ink-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+/* ── Review queue ──────────────────────────────────────────── */
+
+.review-row {
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.review-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.review-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+/* ── AG Grid container ────────────────────────────────────── */
+
+.grid-shell {
+  border-top: 2px solid var(--ink);
+}
+
+/* ── Analytics ─────────────────────────────────────────────── */
+
+.stat-ledger {
+  list-style: none;
+  margin: 0 0 var(--s5);
+  padding: 0;
+  border-top: 2px solid var(--ink);
+}
+
+.stat-ledger li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s4);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+
+.stat-value {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  color: var(--ink-3);
+  font-size: 0.875rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3.5rem;
+  gap: var(--s3);
+  align-items: center;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.bar-track {
+  height: 0.75rem;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--ink);
+}
+
+.bar-fill.tone-go {
+  background: var(--go);
+}
+
+.bar-fill.tone-stop {
+  background: var(--stop);
+}
+
+.bar-fill.tone-hold {
+  background: var(--hold);
+}
+
+.bar-value {
+  font-family: var(--mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Policy studio ─────────────────────────────────────────── */
+
+.policy-form {
+  max-width: 40rem;
+}
+
+.currency-block {
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.currency-block h3 {
+  margin-bottom: var(--s3);
+}
+
+.currency-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--s3);
+}
+
+.policy-actions {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s5);
+  align-items: center;
+}
+
+.save-note {
+  font-size: 0.875rem;
+  color: var(--go-ink);
+}
+
+/* ── Event log ────────────────────────────────────────────── */
+
+.event-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.event-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 2px solid var(--ink);
+  padding: var(--s2) var(--s3) var(--s2) 0;
+}
+
+.event-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: var(--s2) var(--s3) var(--s2) 0;
+  vertical-align: top;
+}

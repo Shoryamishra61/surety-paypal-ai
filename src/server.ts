@@ -277,6 +277,30 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     res.json({ ok: true });
   });
   app.get('/api/transactions', (_req, res) => res.json(records));
+  // ── Policy surface ─────────────────────────────────────────
+  const currencyPolicySchema = z
+    .object({
+      currency: z.string().length(3),
+      maxAutonomousRefundAmount: z.number().positive(),
+      customerDailyLimit: z.number().positive(),
+      merchantDailyLimit: z.number().positive(),
+    })
+    .strict();
+  app.get('/api/policy', (_req, res) => res.json(service.policy.getConfig()));
+  app.put('/api/policy', (req, res) => {
+    const input = z
+      .object({
+        currencies: z.array(currencyPolicySchema).min(1),
+        alwaysRequireApproval: z.boolean().optional(),
+      })
+      .strict()
+      .parse(req.body);
+    service.policy.updateConfig({
+      ...('alwaysRequireApproval' in input ? { alwaysRequireApproval: input.alwaysRequireApproval } : {}),
+      currencies: input.currencies,
+    });
+    res.json(service.policy.getConfig());
+  });
   // ── Agent surface ─────────────────────────────────────────
   app.get('/api/agent/inbox', (_req, res) =>
     res.json(seededInbox.map(({ intent: _intent, ...message }) => message)),
@@ -310,8 +334,10 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders?.();
     const lastEventId = Number(req.get('Last-Event-ID') || 0);
+    // Default-channel frames (no event: line) so a single onmessage handler
+    // receives everything; the type travels inside the JSON payload.
     const write = (event: { id: number; type: string }) => {
-      res.write(`id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+      res.write(`id: ${event.id}\ndata: ${JSON.stringify(event)}\n\n`);
     };
     for (const event of bus.replay(Number.isFinite(lastEventId) ? lastEventId : 0)) write(event);
     const unsubscribe = bus.subscribe(write);

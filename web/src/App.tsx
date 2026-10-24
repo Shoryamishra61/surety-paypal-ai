@@ -1,16 +1,19 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { loadConfig } from './lib/api';
 import type { SuretyConfig } from './lib/api';
-import { navigate, useRoute } from './lib/route';
+import { ConfigContext } from './lib/config';
+import { useRoute } from './lib/route';
+import AgentConsole from './views/AgentConsole';
+import CaseInbox from './views/CaseInbox';
+import CaseDetail from './views/CaseDetail';
+import ReviewQueue from './views/ReviewQueue';
+import PolicyStudio from './views/PolicyStudio';
+import Analytics from './views/Analytics';
+import EventLog from './views/EventLog';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/shell.css';
-
-const ConfigContext = createContext<SuretyConfig | null>(null);
-
-export function useConfig(): SuretyConfig | null {
-  return useContext(ConfigContext);
-}
+import './styles/console.css';
 
 const NAV = [
   { route: '/', label: 'Agent console' },
@@ -39,9 +42,7 @@ export default function App() {
       </a>
       <header className="masthead">
         <div className="masthead-inner">
-          <a className="wordmark" href="#/" onClick={() => navigate('/')}>
-            Surety
-          </a>
+          <a className="wordmark" href="#/">Surety</a>
           <p className="tagline">Premise-bound execution for payment agents</p>
           <div className="masthead-status" aria-live="polite">
             {configError && <span className="pill pill-stop">{configError}</span>}
@@ -77,21 +78,40 @@ export default function App() {
           </ul>
         </nav>
         <main id="main" tabIndex={-1} className="view">
-          {route === '/' && <section className="view-arrive">{/* Agent console (W4b) */}</section>}
-          {route.startsWith('/cases') && (
-            <section className="view-arrive">{/* Case inbox (W4c) */}</section>
+          {route === '/' && (
+            <section className="view-arrive">
+              <AgentConsole />
+            </section>
+          )}
+          {route === '/cases' && (
+            <section className="view-arrive">
+              <CaseInbox />
+            </section>
+          )}
+          {route.startsWith('/cases/') && (
+            <section className="view-arrive">
+              <CaseDetail caseId={route.slice('/cases/'.length)} />
+            </section>
           )}
           {route === '/review' && (
-            <section className="view-arrive">{/* Review queue (W4e) */}</section>
+            <section className="view-arrive">
+              <ReviewQueue />
+            </section>
           )}
           {route === '/policy' && (
-            <section className="view-arrive">{/* Policy studio (W4f) */}</section>
+            <section className="view-arrive">
+              <PolicyStudio />
+            </section>
           )}
           {route === '/analytics' && (
-            <section className="view-arrive">{/* Analytics (W4g) */}</section>
+            <section className="view-arrive">
+              <Analytics />
+            </section>
           )}
           {route === '/events' && (
-            <section className="view-arrive">{/* Event log (W2c) */}</section>
+            <section className="view-arrive">
+              <EventLog />
+            </section>
           )}
         </main>
       </div>
