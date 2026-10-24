@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Surety checks what a customer says against your delivery records before your AI agent sends a refund."
+    />
+    <title>Surety — Check the claim before the refund goes out</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="top">
+      <a class="wordmark" href="/" aria-label="Surety, start over">Surety</a>
+      <nav class="top-nav" aria-label="Primary">
+        <span id="mode" class="mode"></span>
+        <button id="open-activity" class="link" type="button">Past decisions</button>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <!-- STEP 1 · CLAIM -->
+      <section id="view-ask" data-view aria-labelledby="ask-title">
+        <p class="eyebrow">Step 1 of 3 · The claim</p>
+        <h1 id="ask-title" tabindex="-1">Check what the customer says before your agent pays.</h1>
+        <p class="lede">
+          A refund agent with a $50 limit will pay a $49 claim, even when your own delivery records
+          say the package arrived. Surety reads the claim, checks it against those records, and only
+          then lets the refund go out.
+        </p>
+
+        <ol class="model" aria-label="How it works">
+          <li>Customer asks for a refund</li>
+          <li>Surety checks your records</li>
+          <li>Money moves only if it’s true</li>
+        </ol>
+
+        <div id="loading" class="loading" role="status">Opening your workspace…</div>
+
+        <details id="access" class="access" hidden>
+          <summary>Sign in to your PayPal sandbox</summary>
+          <div class="access-body">
+            <p>
+              Tokens stay in this page’s memory and are sent only to this local server. The operator
+              checks and sends refunds; a separate reviewer approves the ones that need a person.
+            </p>
+            <label for="operator-token">Operator token</label>
+            <input id="operator-token" type="password" autocomplete="off" />
+            <label for="reviewer-token">Reviewer token</label>
+            <input id="reviewer-token" type="password" autocomplete="off" />
+            <button id="connect" class="quiet" type="button">Load my orders</button>
+          </div>
+        </details>
+
+        <form id="case-form" hidden>
+          <!-- Demo: choose a situation -->
+          <fieldset id="situations" class="situations" hidden>
+            <legend>Pick a situation to try</legend>
+            <div id="situation-list"></div>
+          </fieldset>
+
+          <!-- The request itself -->
+          <figure class="request">
+            <figcaption>The customer wrote</figcaption>
+            <blockquote id="statement-quote"></blockquote>
+            <p class="request-meta">
+              Refund requested <strong id="amount-text"></strong> · Order
+              <span id="order-text" class="mono"></span>
+            </p>
+          </figure>
+
+          <!-- Live: write the request yourself -->
+          <div id="live-fields" class="live-fields" hidden>
+            <label for="statement">Customer message</label>
+            <textarea id="statement" rows="4" maxlength="4000"></textarea>
+            <div class="live-row">
+              <div>
+                <label for="transaction">Order</label>
+                <select id="transaction"></select>
+              </div>
+              <div>
+                <label for="amount">Refund (USD)</label>
+                <input
+                  id="amount"
+                  type="number"
+                  min="0.01"
+                  max="100000"
+                  step="0.01"
+                  value="49.00"
+                />
+              </div>
+            </div>
+            <p class="note">
+              An AI model reads the message. It has no payment tools and no PayPal credentials.
+            </p>
+          </div>
+
+          <div id="ask-error" class="error" role="alert" hidden></div>
+
+          <button id="check" class="primary" type="submit">Check this refund</button>
+          <p class="note" id="check-note">Nothing is paid at this step.</p>
+        </form>
+      </section>
+
+      <!-- STEP 2 · CHECK -->
+      <section id="view-checking" data-view hidden aria-labelledby="checking-title">
+        <p class="eyebrow">Step 2 of 3 · The check</p>
+        <h2 id="checking-title" tabindex="-1">Checking the claim against your records</h2>
+        <ol class="steps" id="steps">
+          <li data-step="0">Reading the customer’s message</li>
+          <li data-step="1">Looking up the payment and the delivery record</li>
+          <li data-step="2">Applying your refund rules</li>
+        </ol>
+      </section>
+
+      <!-- STEP 3 · DECISION -->
+      <section id="view-result" data-view hidden aria-labelledby="result-title">
+        <p class="eyebrow">Step 3 of 3 · The decision</p>
+        <p id="result-status" class="status"></p>
+        <h2 id="result-title" tabindex="-1"></h2>
+        <p id="result-sub" class="lede"></p>
+
+        <dl id="ledger" class="ledger"></dl>
+
+        <p id="counterfactual" class="counterfactual"></p>
+
+        <div id="result-error" class="error" role="alert" hidden></div>
+
+        <div class="actions">
+          <button id="primary-action" class="primary" type="button"></button>
+          <button id="export" class="link" type="button">Download the proof file</button>
+        </div>
+        <p id="action-note" class="note"></p>
+
+        <details class="trust">
+          <summary>Why you can trust this</summary>
+          <dl id="trust-list" class="trust-list"></dl>
+          <details class="technical">
+            <summary>Technical record</summary>
+            <div id="technical"></div>
+          </details>
+        </details>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section id="view-activity" data-view hidden aria-labelledby="activity-title">
+        <p class="eyebrow">Past decisions</p>
+        <h2 id="activity-title" tabindex="-1">What Surety has checked</h2>
+        <div id="history" class="history"></div>
+        <button id="close-activity" class="link back" type="button">← Back</button>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Surety checks against records you supply. Merchant-reported delivery is evidence, not
+        independent proof. Built for the PayPal AI Hackathon.
+      </p>
+    </footer>
+
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+  </body>
+</html>

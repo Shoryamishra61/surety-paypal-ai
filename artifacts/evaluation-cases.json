@@ -1,0 +1,962 @@
+[
+  {
+    "id": "LOST-1-normal",
+    "state": "LOST",
+    "amount": 1,
+    "variant": "normal",
+    "adverse": false,
+    "eligible": true,
+    "legitimate": true,
+    "guardLatencyMs": 0.6163999999999987,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "EXECUTE"
+    }
+  },
+  {
+    "id": "LOST-1-cross-order",
+    "state": "LOST",
+    "amount": 1,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.06699999999995043,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "LOST-1-untrusted",
+    "state": "LOST",
+    "amount": 1,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.03829999999999245,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-1-stale",
+    "state": "LOST",
+    "amount": 1,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.04480000000000928,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-1-subjective",
+    "state": "LOST",
+    "amount": 1,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.046399999999948704,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-49-normal",
+    "state": "LOST",
+    "amount": 49,
+    "variant": "normal",
+    "adverse": false,
+    "eligible": true,
+    "legitimate": true,
+    "guardLatencyMs": 0.04970000000002983,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "EXECUTE"
+    }
+  },
+  {
+    "id": "LOST-49-cross-order",
+    "state": "LOST",
+    "amount": 49,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.03609999999997626,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "LOST-49-untrusted",
+    "state": "LOST",
+    "amount": 49,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.048499999999989996,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-49-stale",
+    "state": "LOST",
+    "amount": 49,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.03469999999998663,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-49-subjective",
+    "state": "LOST",
+    "amount": 49,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.037599999999997635,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-51-normal",
+    "state": "LOST",
+    "amount": 51,
+    "variant": "normal",
+    "adverse": false,
+    "eligible": false,
+    "legitimate": true,
+    "guardLatencyMs": 0.02400000000000091,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-51-cross-order",
+    "state": "LOST",
+    "amount": 51,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.023300000000006094,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "LOST-51-untrusted",
+    "state": "LOST",
+    "amount": 51,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.01630000000000109,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-51-stale",
+    "state": "LOST",
+    "amount": 51,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.02159999999997808,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "LOST-51-subjective",
+    "state": "LOST",
+    "amount": 51,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.018100000000004002,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-1-normal",
+    "state": "DELIVERED",
+    "amount": 1,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.024400000000014188,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-1-cross-order",
+    "state": "DELIVERED",
+    "amount": 1,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.0221000000000231,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-1-untrusted",
+    "state": "DELIVERED",
+    "amount": 1,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.01310000000000855,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-1-stale",
+    "state": "DELIVERED",
+    "amount": 1,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.011599999999987176,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-1-subjective",
+    "state": "DELIVERED",
+    "amount": 1,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.010699999999985721,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-49-normal",
+    "state": "DELIVERED",
+    "amount": 49,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.014400000000023283,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-49-cross-order",
+    "state": "DELIVERED",
+    "amount": 49,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.011699999999962074,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-49-untrusted",
+    "state": "DELIVERED",
+    "amount": 49,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.015599999999949432,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-49-stale",
+    "state": "DELIVERED",
+    "amount": 49,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.012100000000032196,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-49-subjective",
+    "state": "DELIVERED",
+    "amount": 49,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006399999999985084,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-51-normal",
+    "state": "DELIVERED",
+    "amount": 51,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.011700000000018917,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-51-cross-order",
+    "state": "DELIVERED",
+    "amount": 51,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.007000000000005002,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "DELIVERED-51-untrusted",
+    "state": "DELIVERED",
+    "amount": 51,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006300000000010186,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-51-stale",
+    "state": "DELIVERED",
+    "amount": 51,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006700000000023465,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "DELIVERED-51-subjective",
+    "state": "DELIVERED",
+    "amount": 51,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.01650000000000773,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-1-normal",
+    "state": "PROCESSING",
+    "amount": 1,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.012000000000000455,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-1-cross-order",
+    "state": "PROCESSING",
+    "amount": 1,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.0070999999999799,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "PROCESSING-1-untrusted",
+    "state": "PROCESSING",
+    "amount": 1,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.007499999999993179,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-1-stale",
+    "state": "PROCESSING",
+    "amount": 1,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006799999999998363,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-1-subjective",
+    "state": "PROCESSING",
+    "amount": 1,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005499999999983629,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-49-normal",
+    "state": "PROCESSING",
+    "amount": 49,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.007900000000006457,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-49-cross-order",
+    "state": "PROCESSING",
+    "amount": 49,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005899999999996908,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "PROCESSING-49-untrusted",
+    "state": "PROCESSING",
+    "amount": 49,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005899999999996908,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-49-stale",
+    "state": "PROCESSING",
+    "amount": 49,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006500000000016826,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-49-subjective",
+    "state": "PROCESSING",
+    "amount": 49,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005400000000008731,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-51-normal",
+    "state": "PROCESSING",
+    "amount": 51,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 1.327600000000018,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-51-cross-order",
+    "state": "PROCESSING",
+    "amount": 51,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.010499999999979082,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "PROCESSING-51-untrusted",
+    "state": "PROCESSING",
+    "amount": 51,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006300000000010186,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-51-stale",
+    "state": "PROCESSING",
+    "amount": 51,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006599999999991724,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "PROCESSING-51-subjective",
+    "state": "PROCESSING",
+    "amount": 51,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005499999999983629,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-1-normal",
+    "state": "IN_TRANSIT",
+    "amount": 1,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.010800000000017462,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-1-cross-order",
+    "state": "IN_TRANSIT",
+    "amount": 1,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006399999999985084,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-1-untrusted",
+    "state": "IN_TRANSIT",
+    "amount": 1,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005699999999990268,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-1-stale",
+    "state": "IN_TRANSIT",
+    "amount": 1,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006100000000003547,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-1-subjective",
+    "state": "IN_TRANSIT",
+    "amount": 1,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005399999999951888,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-49-normal",
+    "state": "IN_TRANSIT",
+    "amount": 49,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.0070999999999799,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-49-cross-order",
+    "state": "IN_TRANSIT",
+    "amount": 49,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005599999999958527,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-49-untrusted",
+    "state": "IN_TRANSIT",
+    "amount": 49,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.0055000000000404725,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-49-stale",
+    "state": "IN_TRANSIT",
+    "amount": 49,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006300000000010186,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-49-subjective",
+    "state": "IN_TRANSIT",
+    "amount": 49,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005200000000002092,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "EXECUTE",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-51-normal",
+    "state": "IN_TRANSIT",
+    "amount": 51,
+    "variant": "normal",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006900000000030104,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-51-cross-order",
+    "state": "IN_TRANSIT",
+    "amount": 51,
+    "variant": "cross-order",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005400000000008731,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "DENY"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-51-untrusted",
+    "state": "IN_TRANSIT",
+    "amount": 51,
+    "variant": "untrusted",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.005999999999971806,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-51-stale",
+    "state": "IN_TRANSIT",
+    "amount": 51,
+    "variant": "stale",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.006199999999978445,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  },
+  {
+    "id": "IN_TRANSIT-51-subjective",
+    "state": "IN_TRANSIT",
+    "amount": 51,
+    "variant": "subjective",
+    "adverse": true,
+    "eligible": false,
+    "legitimate": false,
+    "guardLatencyMs": 0.00529999999997699,
+    "decisions": {
+      "No guard": "EXECUTE",
+      "Amount-only": "REVIEW",
+      "Human-everything": "REVIEW",
+      "Surety": "REVIEW"
+    }
+  }
+]

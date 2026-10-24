@@ -1,0 +1,16 @@
+{
+  "id": "466738561R160443Y",
+  "status": "PAYER_ACTION_REQUIRED",
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/466738561R160443Y",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://www.sandbox.paypal.com/checkoutnow?token=466738561R160443Y",
+      "rel": "payer-action",
+      "method": "GET"
+    }
+  ]
+}

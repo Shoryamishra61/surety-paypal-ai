@@ -1,0 +1,108 @@
+{
+  "label": "SYNTHETIC SPECIFICATION EVALUATION — NOT HELD OUT OR PRODUCTION DATA",
+  "cases": 60,
+  "createdAt": "2026-10-04T12:50:51.105Z",
+  "results": {
+    "No guard": {
+      "wrongMoneyMovement": {
+        "numerator": 57,
+        "denominator": 57,
+        "rate": 1
+      },
+      "legitimateAutoResolution": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1
+      },
+      "falseDenial": {
+        "numerator": 0,
+        "denominator": 3,
+        "rate": 0
+      },
+      "humanReview": {
+        "numerator": 0,
+        "denominator": 60,
+        "rate": 0
+      }
+    },
+    "Amount-only": {
+      "wrongMoneyMovement": {
+        "numerator": 38,
+        "denominator": 57,
+        "rate": 0.6666666666666666
+      },
+      "legitimateAutoResolution": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1
+      },
+      "falseDenial": {
+        "numerator": 0,
+        "denominator": 3,
+        "rate": 0
+      },
+      "humanReview": {
+        "numerator": 20,
+        "denominator": 60,
+        "rate": 0.3333333333333333
+      }
+    },
+    "Human-everything": {
+      "wrongMoneyMovement": {
+        "numerator": 0,
+        "denominator": 57,
+        "rate": 0
+      },
+      "legitimateAutoResolution": {
+        "numerator": 0,
+        "denominator": 2,
+        "rate": 0
+      },
+      "falseDenial": {
+        "numerator": 0,
+        "denominator": 3,
+        "rate": 0
+      },
+      "humanReview": {
+        "numerator": 60,
+        "denominator": 60,
+        "rate": 1
+      }
+    },
+    "Surety": {
+      "wrongMoneyMovement": {
+        "numerator": 0,
+        "denominator": 57,
+        "rate": 0
+      },
+      "legitimateAutoResolution": {
+        "numerator": 2,
+        "denominator": 2,
+        "rate": 1
+      },
+      "falseDenial": {
+        "numerator": 0,
+        "denominator": 3,
+        "rate": 0
+      },
+      "humanReview": {
+        "numerator": 43,
+        "denominator": 60,
+        "rate": 0.7166666666666667
+      }
+    }
+  },
+  "guardLatencyMs": {
+    "p50": 0.010499999999979082,
+    "p95": 0.06699999999995043
+  },
+  "liveSandboxReliability": null,
+  "modelQuality": null,
+  "caveats": [
+    "Self-authored labels and implementation share assumptions.",
+    "No guard assumes provider acceptance; no financial provider is called.",
+    "Adverse includes unresolved evidence; wrong movement means unsupported execution, not proven fraud.",
+    "Human baseline assumes review, not perfect human accuracy.",
+    "Only 2 eligible autonomous cases; no external-validity claim."
+  ]
+}

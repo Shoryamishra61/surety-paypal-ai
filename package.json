@@ -1,0 +1,50 @@
+{
+  "name": "surety",
+  "version": "2.0.0",
+  "description": "Premise-bound execution: a policy and proof layer for AI agents that move money on PayPal. Agents propose, Surety verifies, enforces, and proves; PayPal executes.",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "build": "tsc",
+    "start": "tsx src/server.ts",
+    "evaluate": "tsx src/evaluation.ts",
+    "check": "npm run typecheck && npm test && npm run build",
+    "format": "prettier --write src tests scripts public",
+    "format:check": "prettier --check src tests scripts public"
+  },
+  "keywords": [
+    "paypal",
+    "ai-agents",
+    "payments",
+    "governance",
+    "refunds",
+    "agentic-commerce",
+    "hackathon"
+  ],
+  "author": "Surety Team",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/crypto-js": "^4.2.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "@types/uuid": "^10.0.0",
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "uuid": "^14.0.2",
+    "vitest": "^5.0.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}
