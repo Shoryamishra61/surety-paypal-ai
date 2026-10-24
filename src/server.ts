@@ -14,7 +14,7 @@ import {
   merchantRecordSchema,
   dollarsToMinor,
 } from './providers/paypal';
-import { SimulationProvider, demoScenarios } from './providers/simulation';
+import { SimulationProvider, demoScenarios, scenarioRecord } from './providers/simulation';
 import { AgentToolkitRunner, PayPalToolkitReader } from './providers/paypal-toolkit';
 import { EventStore } from './db/event-store';
 import { isRefundEvent, parseWebhookEvent, verifyWebhookSignature } from './webhooks';
@@ -42,15 +42,7 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   const hosted = !LOOPBACK_HOSTS.includes(bindHost);
   const records: MerchantRecord[] =
     mode === 'SIMULATION'
-      ? demoScenarios.map((s) => ({
-          orderId: `SIM-ORD-${s.id}`,
-          captureId: `SIM-CAP-${s.id}`,
-          merchantId: 'SIM-MERCHANT',
-          customerId: 'SIM-CUSTOMER',
-          shipmentId: `SIM-SHP-${s.id}`,
-          fulfillmentState: s.state,
-          observedAt: new Date().toISOString(),
-        }))
+      ? demoScenarios.map(scenarioRecord)
       : z
           .array(merchantRecordSchema)
           .parse(
@@ -315,13 +307,13 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
           'Fixture extraction is available only for the unchanged simulation scenario; enable AI for edited messages',
         );
       claim = {
-        claimType: scenario.id === 'damaged' ? ClaimType.DAMAGED_ITEM : ClaimType.NOT_DELIVERED,
+        claimType: scenario.claimType,
         orderReference: record.orderId,
         captureReference: record.captureId,
         customerId: record.customerId,
         merchantId: record.merchantId,
         rawStatement: input.statement,
-        extractedAmount: 49,
+        extractedAmount: scenario.amount,
         extractedCurrency: 'USD',
         confidence: 0,
       };

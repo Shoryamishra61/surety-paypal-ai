@@ -82,6 +82,7 @@ export class RelationshipBindingEngine {
     if (e.recordType === 'order') return e.providerId === action.orderId;
     if (['shipment', 'fulfillment'].includes(e.recordType)) return e.parentId === action.orderId;
     if (e.recordType === 'refund') return e.parentId === action.captureId;
+    if (e.recordType === 'transactions') return e.providerId === action.orderId;
     return false;
   }
   filterRelevantEvidence(evidence: EvidenceRecord[], action: ProposedAction): EvidenceRecord[] {

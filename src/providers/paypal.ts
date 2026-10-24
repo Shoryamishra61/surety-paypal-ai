@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { EvidenceRecord, EvidenceProvider, ProposedAction } from '../core/types';
+import {
+  ClaimType,
+  EvidenceRecord,
+  EvidenceProvider,
+  ProposedAction,
+  TypedClaim,
+} from '../core/types';
 import { PayPalToolkitReader } from './paypal-toolkit';
 import {
   SUPPORTED_CURRENCIES,
@@ -21,7 +27,7 @@ export interface RefundResult {
 }
 export interface PaymentProvider {
   readonly mode: 'SIMULATION' | 'PAYPAL_SANDBOX';
-  facts(action: ProposedAction): Promise<FinancialFacts>;
+  facts(action: ProposedAction, claim?: TypedClaim): Promise<FinancialFacts>;
   refund(action: ProposedAction, requestId: string): Promise<RefundResult>;
   getRefund(id: string): Promise<RefundResult>;
 }
@@ -50,6 +56,8 @@ export const merchantRecordSchema = z
     shipmentId: z.string().min(1),
     fulfillmentState: z.enum(['DELIVERED', 'LOST', 'PROCESSING', 'IN_TRANSIT', 'UNKNOWN']),
     observedAt: z.string().datetime(),
+    amount: z.number().positive().optional(),
+    currency: z.string().length(3).optional(),
   })
   .strict();
 export type MerchantRecord = z.infer<typeof merchantRecordSchema>;
@@ -63,7 +71,12 @@ export function merchantEvidence(record: MerchantRecord): EvidenceRecord[] {
       recordType: 'order',
       state: 'RECORDED',
       timestamp: record.observedAt,
-      data: { merchantId: record.merchantId, customerId: record.customerId },
+      data: {
+        merchantId: record.merchantId,
+        customerId: record.customerId,
+        ...(record.amount !== undefined ? { amount: record.amount } : {}),
+        ...(record.currency ? { currency: record.currency } : {}),
+      },
       provenance: 'Merchant-reported OMS record; not independent delivery proof',
     },
     {
@@ -160,7 +173,7 @@ export class PayPalSandbox implements PaymentProvider {
       throw new Error(`PayPal ${method} failed (${response.status}); reconcile before retry`);
     return response.json();
   }
-  async facts(action: ProposedAction): Promise<FinancialFacts> {
+  async facts(action: ProposedAction, claim?: TypedClaim): Promise<FinancialFacts> {
     const capture = captureSchema.parse(
       await this.call(`/v2/payments/captures/${encodeURIComponent(action.captureId)}`),
     );
@@ -194,13 +207,20 @@ export class PayPalSandbox implements PaymentProvider {
         r.customerId === action.customerId,
     );
     if (!record) throw new Error('Trusted merchant relationship record unavailable');
-    const trackingEvidence: EvidenceRecord[] = [];
     const reader = this.reader ? await this.reader : null;
+    const extraEvidence: EvidenceRecord[] = [];
     if (reader) {
       // Fail-closed: infra failures throw; "no tracking exists" returns null.
       const tracking = await reader.trackingForCapture(action.orderId, action.captureId);
       if (tracking)
-        trackingEvidence.push(reader.trackingEvidence(action.orderId, action.captureId, tracking));
+        extraEvidence.push(reader.trackingEvidence(action.orderId, action.captureId, tracking));
+      const needsSettlements =
+        claim?.claimType === ClaimType.DUPLICATE_CHARGE ||
+        claim?.claimType === ClaimType.ALREADY_REFUNDED;
+      if (needsSettlements) {
+        const transactions = await reader.transactions();
+        extraEvidence.push(reader.transactionEvidence(action.orderId, transactions));
+      }
     }
     return {
       captureAmountMinor: parseMinor(capture.amount.value, capture.amount.currency_code),
@@ -224,7 +244,7 @@ export class PayPalSandbox implements PaymentProvider {
           provenance: `PayPal sandbox capture and order GET (${formatMinor(parseMinor(capture.amount.value, capture.amount.currency_code), capture.amount.currency_code)}); timestamp is capture update_time`,
         },
         ...merchantEvidence(record),
-        ...trackingEvidence,
+        ...extraEvidence,
       ],
     };
   }

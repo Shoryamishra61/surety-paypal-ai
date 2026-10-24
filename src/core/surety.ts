@@ -139,7 +139,7 @@ export class Surety {
     const action = ProposedActionSchema.parse(rawAction);
     const claim = TypedClaimSchema.parse(rawClaim);
     toMinor(action.amount, action.currency);
-    const facts = await this.provider.facts(action);
+    const facts = await this.provider.facts(action, claim);
     const evaluated = this.evaluate(claim, action, facts);
     return this.save({
       caseId: randomUUID(),
@@ -197,7 +197,7 @@ export class Surety {
     if (record.decision === 'DENY') throw new Error('Denied case cannot execute');
     let facts: FinancialFacts;
     try {
-      facts = await this.provider.facts(record.action);
+      facts = await this.provider.facts(record.action, record.claim);
     } catch (error) {
       return this.save({
         ...record,

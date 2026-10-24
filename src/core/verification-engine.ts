@@ -1,3 +1,16 @@
+// ============================================================
+// SURETY — Premise verification engine.
+//
+// Each claim type has an explicit evidence contract:
+//   NOT_DELIVERED    fresh, consistent, trusted delivery records
+//   DUPLICATE_CHARGE settlement history shows ≥2 same-amount
+//                    captures for the payer, none yet refunded
+//   ALREADY_REFUNDED settlement history shows a completed refund
+//                    of the claimed amount (blocks double refunds)
+//   WRONG_AMOUNT     capture amount vs ordered amount
+//   everything else  subjective → human review, never automation
+// ============================================================
+
 import {
   ClaimType,
   PremiseVerdict,
@@ -9,11 +22,19 @@ import {
   VerificationResult,
 } from './types';
 import { RelationshipBindingEngine } from './relationship-binding';
+import { minorExponent, parseMinor, toMinor } from './money';
 
-/** Only non-delivery has an autonomous evidence contract in this prototype. */
+interface SettlementLike {
+  kind?: string;
+  transactionId?: string;
+  amount?: string;
+  currency?: string;
+  status?: string;
+}
+
 export class PremiseVerificationEngine {
   private bindingEngine = new RelationshipBindingEngine();
-  constructor(private policyVersion = '1.0.0') {}
+  constructor(private policyVersion = '2.0.0') {}
   verify(
     claim: TypedClaim,
     action: ProposedAction,
@@ -48,21 +69,37 @@ export class PremiseVerificationEngine {
       );
     if (binding.warnings.length)
       return result(PremiseVerdict.UNKNOWN, ['INCOMPLETE_RELATIONSHIPS'], binding.warnings);
-    if (claim.claimType !== ClaimType.NOT_DELIVERED) {
-      const reason =
-        claim.claimType === ClaimType.DUPLICATE_CHARGE
-          ? 'DUPLICATE_LINEAGE_UNRESOLVED'
-          : [ClaimType.DAMAGED_ITEM, ClaimType.NOT_AS_DESCRIBED].includes(claim.claimType)
+
+    switch (claim.claimType) {
+      case ClaimType.NOT_DELIVERED:
+        return this.verifyNotDelivered(result, relevant);
+      case ClaimType.DUPLICATE_CHARGE:
+        return this.verifyDuplicateCharge(result, action, relevant);
+      case ClaimType.ALREADY_REFUNDED:
+        return this.verifyAlreadyRefunded(result, action, relevant);
+      case ClaimType.WRONG_AMOUNT:
+        return this.verifyWrongAmount(result, action, relevant);
+      default: {
+        const reason =
+          claim.claimType === ClaimType.DAMAGED_ITEM ||
+          claim.claimType === ClaimType.NOT_AS_DESCRIBED
             ? 'SUBJECTIVE_CLAIM'
             : 'UNSUPPORTED_AUTOMATION';
-      return result(
-        PremiseVerdict.UNKNOWN,
-        [reason],
-        [
-          'This claim requires human investigation; transaction records alone do not establish the premise.',
-        ],
-      );
+        return result(
+          PremiseVerdict.UNKNOWN,
+          [reason],
+          [
+            'This claim requires human investigation; transaction records alone do not establish the premise.',
+          ],
+        );
+      }
     }
+  }
+
+  private verifyNotDelivered(
+    result: (v: PremiseVerdict, r: string[], u?: string[]) => VerificationResult,
+    relevant: EvidenceRecord[],
+  ): VerificationResult {
     const delivery = relevant.filter((e) => ['shipment', 'fulfillment'].includes(e.recordType));
     if (!delivery.length)
       return result(
@@ -96,5 +133,146 @@ export class PremiseVerificationEngine {
       ['DELIVERY_UNRESOLVED'],
       [`Shipment state ${delivery[0].state} does not establish terminal non-delivery`],
     );
+  }
+
+  private settlements(relevant: EvidenceRecord[]): SettlementLike[] {
+    return relevant
+      .filter((e) => e.recordType === 'transactions')
+      .flatMap((e) =>
+        Array.isArray((e.data as { transactions?: unknown }).transactions)
+          ? ((e.data as { transactions: unknown[] }).transactions as SettlementLike[])
+          : [],
+      );
+  }
+
+  private verifyDuplicateCharge(
+    result: (v: PremiseVerdict, r: string[], u?: string[]) => VerificationResult,
+    action: ProposedAction,
+    relevant: EvidenceRecord[],
+  ): VerificationResult {
+    const transactions = this.settlements(relevant);
+    if (!transactions.length)
+      return result(
+        PremiseVerdict.UNKNOWN,
+        ['NO_TRANSACTION_HISTORY'],
+        ['Duplicate-charge claims require settlement history'],
+      );
+    const amountMinor = toMinor(action.amount, action.currency);
+    const sameAmount = transactions.filter(
+      (t) =>
+        t.kind === 'CAPTURE' &&
+        t.status === 'S' &&
+        t.currency === action.currency &&
+        t.amount !== undefined &&
+        parseMinor(t.amount, t.currency) === amountMinor,
+    );
+    const refundedSameAmount = transactions.some(
+      (t) =>
+        t.kind === 'REFUND' &&
+        t.status === 'S' &&
+        t.currency === action.currency &&
+        t.amount !== undefined &&
+        parseMinor(t.amount, t.currency) === amountMinor,
+    );
+    if (sameAmount.length === 1)
+      return result(
+        PremiseVerdict.CONTRADICTED,
+        ['SINGLE_CAPTURE_ONLY'],
+        [
+          'Settlement history shows one capture for this amount; the customer was not charged twice',
+        ],
+      );
+    if (sameAmount.length >= 2 && refundedSameAmount)
+      return result(
+        PremiseVerdict.UNKNOWN,
+        ['DUPLICATE_ALREADY_REFUNDED'],
+        ['A same-amount refund already exists; a further refund requires review'],
+      );
+    if (sameAmount.length >= 2 && sameAmount.some((t) => t.transactionId === action.captureId))
+      return result(PremiseVerdict.VERIFIED, [
+        'DUPLICATE_CAPTURE_CONFIRMED',
+        `CAPTURES:${sameAmount.length}`,
+      ]);
+    return result(
+      PremiseVerdict.UNKNOWN,
+      ['DUPLICATE_TARGET_UNRESOLVED'],
+      ['Duplicate captures exist but the proposed capture is not one of them; review required'],
+    );
+  }
+
+  private verifyAlreadyRefunded(
+    result: (v: PremiseVerdict, r: string[], u?: string[]) => VerificationResult,
+    action: ProposedAction,
+    relevant: EvidenceRecord[],
+  ): VerificationResult {
+    const transactions = this.settlements(relevant);
+    if (!transactions.length)
+      return result(
+        PremiseVerdict.UNKNOWN,
+        ['NO_TRANSACTION_HISTORY'],
+        ['Refund-history claims require settlement history'],
+      );
+    const amountMinor = toMinor(action.amount, action.currency);
+    const priorRefund = transactions.some(
+      (t) =>
+        t.kind === 'REFUND' &&
+        t.status === 'S' &&
+        t.currency === action.currency &&
+        t.amount !== undefined &&
+        parseMinor(t.amount, t.currency) === amountMinor,
+    );
+    if (priorRefund)
+      return result(
+        PremiseVerdict.CONTRADICTED,
+        ['PRIOR_REFUND_CONFIRMED'],
+        [
+          'Settlement history shows a completed refund of this amount; paying again would double-refund',
+        ],
+      );
+    return result(
+      PremiseVerdict.UNKNOWN,
+      ['NO_PRIOR_REFUND_FOUND'],
+      [
+        'No completed refund found for this amount; the claim may relate to a pending refund or different amount',
+      ],
+    );
+  }
+
+  private verifyWrongAmount(
+    result: (v: PremiseVerdict, r: string[], u?: string[]) => VerificationResult,
+    action: ProposedAction,
+    relevant: EvidenceRecord[],
+  ): VerificationResult {
+    const capture = relevant.find((e) => e.recordType === 'capture');
+    const order = relevant.find((e) => e.recordType === 'order');
+    const captureMinor = this.amountMinorOf(capture, action.currency);
+    const orderMinor = this.amountMinorOf(order, action.currency);
+    if (captureMinor === null || orderMinor === null)
+      return result(
+        PremiseVerdict.UNKNOWN,
+        ['AMOUNT_EVIDENCE_MISSING'],
+        ['Both the captured amount and the ordered amount are required'],
+      );
+    if (captureMinor === orderMinor)
+      return result(
+        PremiseVerdict.CONTRADICTED,
+        ['CHARGE_MATCHES_ORDER'],
+        ['The capture matches the ordered amount; the charge is not demonstrably wrong'],
+      );
+    const difference = (captureMinor - orderMinor) / 10 ** minorExponent(action.currency);
+    return result(
+      PremiseVerdict.UNKNOWN,
+      ['AMOUNT_DISCREPANCY_CONFIRMED'],
+      [
+        `Capture and order amounts differ (${difference} ${action.currency}); a human decides the refund amount`,
+      ],
+    );
+  }
+
+  private amountMinorOf(record: EvidenceRecord | undefined, currency: string): number | null {
+    if (!record) return null;
+    const amount = (record.data as { amount?: unknown }).amount;
+    if (typeof amount !== 'number' || !Number.isFinite(amount)) return null;
+    return toMinor(amount, currency);
   }
 }

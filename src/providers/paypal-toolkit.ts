@@ -98,6 +98,38 @@ const refundResponseSchema = z.object({
   amount: z.object({ value: z.string(), currency_code: z.string() }).optional(),
   update_time: z.string().datetime().optional(),
 });
+const transactionDetailSchema = z.object({
+  transaction_info: z.object({
+    transaction_id: z.string(),
+    transaction_event_code: z.string(),
+    transaction_status: z.string(),
+    transaction_amount: z.object({ currency_code: z.string(), value: z.string() }),
+    transaction_initiation_date: z.string(),
+  }),
+  payer_info: z
+    .object({ email_address: z.string().optional(), customer_id: z.string().optional() })
+    .optional(),
+});
+const transactionsResponseSchema = z.object({
+  transaction_details: z.array(transactionDetailSchema),
+});
+
+/** Normalized settlement transaction used by claim evidence contracts. */
+export interface SettlementTransaction {
+  kind: 'CAPTURE' | 'REFUND';
+  transactionId: string;
+  eventCode: string;
+  status: string;
+  amount: string;
+  currency: string;
+  initiatedAt: string;
+  payerEmail: string | null;
+}
+
+/** PayPal event-code families that move money back to the payer. */
+function settlementKind(eventCode: string): 'CAPTURE' | 'REFUND' {
+  return /^T00(08|09|1[0-9])/i.test(eventCode) ? 'REFUND' : 'CAPTURE';
+}
 
 /** PayPal tracking status → Surety fulfillment state. Unmapped states stay UNKNOWN. */
 const TRACKING_STATUS: Record<string, FulfillmentStatus> = {
@@ -197,6 +229,59 @@ export class PayPalToolkitReader {
       amountMinor: parsed.amount ? Math.round(Number(parsed.amount.value) * 100) : null,
       currency: parsed.amount?.currency_code ?? null,
       updatedAt: parsed.update_time ?? null,
+    };
+  }
+
+  /**
+   * Merchant settlement transactions for a date window (UTC), newest first.
+   * The toolkit pages month-by-month; we stop once the window is covered.
+   */
+  async transactions(days = 30): Promise<SettlementTransaction[]> {
+    const end = new Date();
+    const start = new Date(end.getTime() - days * 24 * 3600 * 1000);
+    const collected: SettlementTransaction[] = [];
+    // Month-sized steps, oldest first, to match the toolkit's pagination.
+    let windowEnd = new Date(end);
+    while (windowEnd > start) {
+      const windowStart = new Date(
+        Math.max(start.getTime(), windowEnd.getTime() - 31 * 24 * 3600 * 1000),
+      );
+      const raw = await this.call('list_transactions', {
+        start_date: windowStart.toISOString().replace(/\.\d+Z$/, 'Z'),
+        end_date: windowEnd.toISOString().replace(/\.\d+Z$/, 'Z'),
+        page_size: 100,
+      });
+      const parsed = transactionsResponseSchema.parse(parseMaybeJson(raw));
+      for (const detail of parsed.transaction_details) {
+        const info = detail.transaction_info;
+        collected.push({
+          kind: settlementKind(info.transaction_event_code),
+          transactionId: info.transaction_id,
+          eventCode: info.transaction_event_code,
+          status: info.transaction_status,
+          amount: info.transaction_amount.value,
+          currency: info.transaction_amount.currency_code,
+          initiatedAt: info.transaction_initiation_date,
+          payerEmail: detail.payer_info?.email_address ?? null,
+        });
+      }
+      windowEnd = windowStart;
+    }
+    return collected.sort((a, b) => b.initiatedAt.localeCompare(a.initiatedAt));
+  }
+
+  /** Settlement history as evidence records tied to the action's order. */
+  transactionEvidence(orderId: string, transactions: SettlementTransaction[]): EvidenceRecord {
+    return {
+      evidenceId: `pp-transactions:${orderId}`,
+      provider: EvidenceProvider.PAYPAL,
+      providerId: orderId,
+      parentId: orderId,
+      recordType: 'transactions',
+      state: 'RECORDED',
+      timestamp: new Date().toISOString(),
+      data: { transactions, windowDays: 30 },
+      provenance: `PayPal settlement history via official Agent Toolkit (${transactions.length} records, 30-day window)`,
     };
   }
 }
