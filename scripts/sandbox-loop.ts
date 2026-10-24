@@ -128,7 +128,14 @@ async function main() {
       const deadline = Date.now() + timeoutMinutes * 60_000;
       while (Date.now() < deadline) {
         await sleep(5000);
-        order = await call(accessToken, `/v2/checkout/orders/${order.id}`);
+        // Polling tolerates transient PayPal errors (429/5xx); only a real
+        // status change or the deadline ends the wait.
+        try {
+          order = await call(accessToken, `/v2/checkout/orders/${order.id}`);
+        } catch (error) {
+          console.log(`Poll retry after transient error: ${(error as Error).message}`);
+          continue;
+        }
         if (order.status !== 'CREATED' && order.status !== 'PAYER_ACTION_REQUIRED') break;
       }
       if (order.status !== 'APPROVED' && order.status !== 'COMPLETED')
