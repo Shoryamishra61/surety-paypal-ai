@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { Surety } from './core/surety';
@@ -264,7 +264,17 @@ export function createApplication(filename = process.env.DATABASE_PATH || 'suret
   app.post('/api/cases/:id/reconcile', async (req, res) =>
     res.json(await service.reconcile(req.params.id)),
   );
-  app.use(express.static(join(process.cwd(), 'public')));
+  // Serve the React console when it has been built; otherwise the legacy page.
+  const consoleDirectory = join(process.cwd(), 'web', 'dist');
+  if (existsSync(consoleDirectory)) {
+    app.use(express.static(consoleDirectory));
+    app.get('/*splat', (req, res, next) => {
+      if (req.path.startsWith('/api/')) next();
+      else res.sendFile(join(consoleDirectory, 'index.html'));
+    });
+  } else {
+    app.use(express.static(join(process.cwd(), 'public')));
+  }
   app.use(
     (error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
       res.status(400).json({ error: error.message });

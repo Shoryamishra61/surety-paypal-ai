@@ -1,0 +1,60 @@
+/* Surety console — design tokens.
+   Thesis: "forensic ledger". Warm paper ground, ink typography,
+   hairline accounting rules. The verdict triad (go / stop / hold)
+   is the only saturated color in the system and is reserved for
+   decisions and status. Nothing decorative gets color. */
+
+:root {
+  /* Ground and ink */
+  --paper: #f6f3ec;
+  --paper-2: #ece7da;
+  --paper-3: #e2dcc9;
+  --ink: #1b1a17;
+  --ink-2: #4d4a42;
+  --ink-3: #66625a;
+  --rule: #d6cfbf;
+  --rule-strong: #b9b099;
+
+  /* Verdict triad — decisions and status only */
+  --go: #1f6b47;
+  --go-ink: #164d34;
+  --stop: #a3301d;
+  --stop-ink: #7c2415;
+  --hold: #84540a;
+  --hold-ink: #634007;
+
+  /* Agent-console step accents (data lineage, not decoration) */
+  --agent: #2f5d8a;
+
+  /* Type stacks — system only, CSP is self */
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+
+  /* Spacing scale */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2.5rem;
+  --s7: 4rem;
+  --s8: 6rem;
+
+  /* Radius — barely rounded; this is paper, not an app toybox */
+  --radius: 4px;
+
+  /* Measures */
+  --measure: 40rem;
+  --measure-wide: 72rem;
+  --shell: 88rem;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-arrive: 320ms;
+
+  /* Elevation — hairlines and ink, not shadows */
+  --focus-ring: 0 0 0 5px var(--paper);
+}
