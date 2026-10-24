@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { EvidenceRecord, EvidenceProvider, ProposedAction } from '../core/types';
 import { PayPalToolkitReader } from './paypal-toolkit';
+import {
+  SUPPORTED_CURRENCIES,
+  formatMinor,
+  minorExponent,
+  parseMinor,
+  toMinor,
+} from '../core/money';
 
 export interface FinancialFacts {
   evidence: EvidenceRecord[];
@@ -18,21 +25,21 @@ export interface PaymentProvider {
   refund(action: ProposedAction, requestId: string): Promise<RefundResult>;
   getRefund(id: string): Promise<RefundResult>;
 }
+/** USD-specific helpers kept for compatibility; the engine is currency-aware. */
 export function dollarsToMinor(value: number): number {
-  const minor = Math.round(value * 100);
-  if (
-    !Number.isFinite(value) ||
-    value < 0 ||
-    !Number.isSafeInteger(minor) ||
-    Math.abs(value * 100 - minor) > 1e-7
-  )
-    throw new Error('USD amount must have at most two decimal places');
-  return minor;
+  return toMinor(value, 'USD');
 }
 export function parseUsd(value: string): number {
-  if (!/^(0|[1-9]\d{0,10})(\.\d{1,2})?$/.test(value)) throw new Error('Invalid USD amount');
-  const [whole, fraction = ''] = value.split('.');
-  return Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return parseMinor(value, 'USD');
+}
+/** Provider money value string for a major-unit amount in the action currency. */
+export function providerValueString(amount: number, currency: string): string {
+  const exponent = minorExponent(currency);
+  const minor = toMinor(amount, currency);
+  const absolute = minor.toString().padStart(exponent + 1, '0');
+  const whole = absolute.slice(0, absolute.length - exponent) || '0';
+  const fraction = exponent ? '.' + absolute.slice(absolute.length - exponent) : '';
+  return whole + fraction;
 }
 export const merchantRecordSchema = z
   .object({
@@ -76,7 +83,10 @@ const refundSchema = z.object({
   id: z.string().min(1),
   status: z.enum(['COMPLETED', 'PENDING', 'FAILED', 'CANCELLED']),
 });
-const moneySchema = z.object({ currency_code: z.literal('USD'), value: z.string() });
+const moneySchema = z.object({
+  currency_code: z.enum(SUPPORTED_CURRENCIES as [string, ...string[]]),
+  value: z.string(),
+});
 const captureSchema = z.object({
   id: z.string(),
   status: z.string(),
@@ -193,9 +203,9 @@ export class PayPalSandbox implements PaymentProvider {
         trackingEvidence.push(reader.trackingEvidence(action.orderId, action.captureId, tracking));
     }
     return {
-      captureAmountMinor: parseUsd(capture.amount.value),
+      captureAmountMinor: parseMinor(capture.amount.value, capture.amount.currency_code),
       refundedMinor: 0,
-      currency: 'USD',
+      currency: capture.amount.currency_code,
       evidence: [
         {
           evidenceId: `capture:${capture.id}`,
@@ -205,8 +215,13 @@ export class PayPalSandbox implements PaymentProvider {
           recordType: 'capture',
           state: capture.status,
           timestamp: capture.update_time,
-          data: { amount: parseUsd(capture.amount.value) / 100, currency: 'USD' },
-          provenance: 'PayPal sandbox capture and order GET; timestamp is capture update_time',
+          data: {
+            amount:
+              parseMinor(capture.amount.value, capture.amount.currency_code) /
+              10 ** minorExponent(capture.amount.currency_code),
+            currency: capture.amount.currency_code,
+          },
+          provenance: `PayPal sandbox capture and order GET (${formatMinor(parseMinor(capture.amount.value, capture.amount.currency_code), capture.amount.currency_code)}); timestamp is capture update_time`,
         },
         ...merchantEvidence(record),
         ...trackingEvidence,
@@ -214,12 +229,17 @@ export class PayPalSandbox implements PaymentProvider {
     };
   }
   async refund(action: ProposedAction, requestId: string): Promise<RefundResult> {
-    dollarsToMinor(action.amount);
+    toMinor(action.amount, action.currency);
     return refundSchema.parse(
       await this.call(
         `/v2/payments/captures/${encodeURIComponent(action.captureId)}/refund`,
         'POST',
-        { amount: { value: action.amount.toFixed(2), currency_code: 'USD' } },
+        {
+          amount: {
+            value: providerValueString(action.amount, action.currency),
+            currency_code: action.currency,
+          },
+        },
         requestId,
       ),
     );

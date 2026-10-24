@@ -145,6 +145,7 @@ it('independent SQLite connections enforce one reservation', () => {
     const reservation = {
       logicalId: 'one',
       captureId: 'CAP',
+      currency: 'USD',
       merchantId: 'M',
       customerId: 'C',
       amountMinor: 4900,

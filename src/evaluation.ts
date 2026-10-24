@@ -84,8 +84,14 @@ for (const state of ['LOST', 'DELIVERED', 'PROCESSING', 'IN_TRANSIT'])
       const p = policy.evaluate(
         action,
         verification,
-        { captureId: 'CAP', captureAmount: 100, totalRefunded: 0, currency: 'USD' },
-        { merchantId: 'M', customerId: 'C', customerDailyTotal: 0, merchantDailyTotal: 0 },
+        { captureId: 'CAP', captureAmountMinor: 10000, totalRefundedMinor: 0, currency: 'USD' },
+        {
+          merchantId: 'M',
+          customerId: 'C',
+          currency: 'USD',
+          customerDailyMinor: 0,
+          merchantDailyMinor: 0,
+        },
       );
       const surety = !p.permitted ? 'DENY' : p.requiresApproval ? 'REVIEW' : verification.decision;
       rows.push({

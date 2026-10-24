@@ -115,7 +115,7 @@ describe('financial premise regressions', () => {
       new PolicyEngine().evaluate(
         action,
         engine.verify(claim, action, records('DELIVERED')),
-        { captureId: 'CAP-A', captureAmount: 49, totalRefunded: 0, currency: 'USD' },
+        { captureId: 'CAP-A', captureAmountMinor: 4900, totalRefundedMinor: 0, currency: 'USD' },
         null,
       ).permitted,
     ).toBe(false));
@@ -124,7 +124,7 @@ describe('financial premise regressions', () => {
       new PolicyEngine().evaluate(
         { ...action, amount },
         engine.verify(claim, action, records()),
-        { captureId: 'CAP-A', captureAmount: 49, totalRefunded: 0, currency: 'USD' },
+        { captureId: 'CAP-A', captureAmountMinor: 4900, totalRefundedMinor: 0, currency: 'USD' },
         null,
       ).permitted,
     ).toBe(false),

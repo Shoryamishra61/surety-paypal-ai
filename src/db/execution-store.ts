@@ -9,6 +9,7 @@ export interface CaseRecord {
 }
 export interface Reservation {
   logicalId: string;
+  currency: string;
   captureId: string;
   merchantId: string;
   customerId: string;
@@ -30,10 +31,15 @@ export class ExecutionStore {
     this.db.pragma('busy_timeout = 5000');
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS case_snapshots(case_id TEXT NOT NULL, version INTEGER NOT NULL, json TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(case_id,version));
-      CREATE TABLE IF NOT EXISTS reservations(logicalId TEXT PRIMARY KEY, captureId TEXT NOT NULL, merchantId TEXT NOT NULL, customerId TEXT NOT NULL, amountMinor INTEGER NOT NULL CHECK(amountMinor>0), argsDigest TEXT NOT NULL, requestId TEXT NOT NULL UNIQUE, state TEXT NOT NULL, refundId TEXT, approvalId TEXT UNIQUE, createdAt TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS reservations(logicalId TEXT PRIMARY KEY, captureId TEXT NOT NULL, merchantId TEXT NOT NULL, customerId TEXT NOT NULL, amountMinor INTEGER NOT NULL CHECK(amountMinor>0), currency TEXT NOT NULL DEFAULT 'USD', argsDigest TEXT NOT NULL, requestId TEXT NOT NULL UNIQUE, state TEXT NOT NULL, refundId TEXT, approvalId TEXT UNIQUE, createdAt TEXT NOT NULL);
       CREATE UNIQUE INDEX IF NOT EXISTS one_unresolved_per_capture ON reservations(captureId) WHERE state IN ('RESERVED','PENDING');
       CREATE TABLE IF NOT EXISTS case_approvals(case_id TEXT PRIMARY KEY, approval_id TEXT NOT NULL UNIQUE, consumed INTEGER NOT NULL DEFAULT 0);
     `);
+    const columns = this.db.prepare("PRAGMA table_info('reservations')").all() as unknown as {
+      name: string;
+    }[];
+    if (columns.length && !columns.some((c) => c.name === 'currency'))
+      this.db.exec("ALTER TABLE reservations ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD'");
   }
   getCase(caseId: string): CaseRecord | undefined {
     const row = this.db
@@ -80,13 +86,13 @@ export class ExecutionStore {
           throw new Error('Remaining refundable balance exceeded');
         const day = record.createdAt.slice(0, 10);
         const customer = sum(
-          "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND customerId=? AND substr(createdAt,1,10)=? AND state!='FAILED'",
+          "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND customerId=? AND substr(createdAt,1,10)=? AND state!='FAILED' AND currency=@currency",
           record.merchantId,
           record.customerId,
           day,
         );
         const merchant = sum(
-          "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND substr(createdAt,1,10)=? AND state!='FAILED'",
+          "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND substr(createdAt,1,10)=? AND state!='FAILED' AND currency=@currency",
           record.merchantId,
           day,
         );
@@ -106,7 +112,7 @@ export class ExecutionStore {
         }
         this.db
           .prepare(
-            'INSERT INTO reservations VALUES(@logicalId,@captureId,@merchantId,@customerId,@amountMinor,@argsDigest,@requestId,@state,@refundId,@approvalId,@createdAt)',
+            'INSERT INTO reservations(logicalId,captureId,merchantId,customerId,amountMinor,currency,argsDigest,requestId,state,refundId,approvalId,createdAt) VALUES(@logicalId,@captureId,@merchantId,@customerId,@amountMinor,@currency,@argsDigest,@requestId,@state,@refundId,@approvalId,@createdAt)',
           )
           .run(record);
       })

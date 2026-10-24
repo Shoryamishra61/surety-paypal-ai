@@ -19,7 +19,8 @@ import {
 } from './types';
 import { ExecutionStore, CaseRecord } from '../db/execution-store';
 import { SuretyDatabase } from '../db/database';
-import { FinancialFacts, PaymentProvider, dollarsToMinor } from '../providers/paypal';
+import { FinancialFacts, PaymentProvider } from '../providers/paypal';
+import { toMinor } from './money';
 
 export interface EvaluatedCase extends CaseRecord {
   action: ProposedAction;
@@ -92,30 +93,33 @@ export class Surety {
     );
     const day = new Date().toISOString().slice(0, 10);
     const customerTotal = total(
-      "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND customerId=? AND substr(createdAt,1,10)=? AND state!='FAILED'",
+      "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND customerId=? AND substr(createdAt,1,10)=? AND state!='FAILED' AND currency=?",
       action.merchantId,
       action.customerId,
       day,
+      action.currency,
     );
     const merchantTotal = total(
-      "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND substr(createdAt,1,10)=? AND state!='FAILED'",
+      "SELECT COALESCE(SUM(amountMinor),0) n FROM reservations WHERE merchantId=? AND substr(createdAt,1,10)=? AND state!='FAILED' AND currency=?",
       action.merchantId,
       day,
+      action.currency,
     );
     const policy = this.policy.evaluate(
       action,
       verification,
       {
         captureId: action.captureId,
-        captureAmount: facts.captureAmountMinor / 100,
-        totalRefunded: Math.max(facts.refundedMinor, localRefunded) / 100,
         currency: facts.currency,
+        captureAmountMinor: facts.captureAmountMinor,
+        totalRefundedMinor: Math.max(facts.refundedMinor, localRefunded),
       },
       {
         customerId: action.customerId,
         merchantId: action.merchantId,
-        customerDailyTotal: customerTotal / 100,
-        merchantDailyTotal: merchantTotal / 100,
+        currency: action.currency,
+        customerDailyMinor: customerTotal,
+        merchantDailyMinor: merchantTotal,
       },
     );
     // Daily totals and concurrent reservations are enforced transactionally at execution.
@@ -134,7 +138,7 @@ export class Surety {
   ): Promise<EvaluatedCase> {
     const action = ProposedActionSchema.parse(rawAction);
     const claim = TypedClaimSchema.parse(rawClaim);
-    dollarsToMinor(action.amount);
+    toMinor(action.amount, action.currency);
     const facts = await this.provider.facts(action);
     const evaluated = this.evaluate(claim, action, facts);
     return this.save({
@@ -220,6 +224,9 @@ export class Surety {
       );
       if (!validation.valid) throw new Error(validation.reason);
     }
+    const currencyPolicy = this.policy.policyFor(record.action.currency);
+    if (!currencyPolicy)
+      throw new Error(`Currency ${record.action.currency} is not permitted by policy`);
     const requestId = generateIdempotencyKey(caseId, record.action.actionType);
     const config = this.policy.getConfig();
     this.store.reserve(
@@ -228,7 +235,8 @@ export class Surety {
         captureId: record.action.captureId,
         merchantId: record.action.merchantId,
         customerId: record.action.customerId,
-        amountMinor: dollarsToMinor(record.action.amount),
+        amountMinor: toMinor(record.action.amount, record.action.currency),
+        currency: record.action.currency,
         argsDigest: computeActionDigest(record.action),
         requestId,
         state: 'RESERVED',
@@ -238,8 +246,8 @@ export class Surety {
       },
       facts.captureAmountMinor,
       facts.refundedMinor,
-      dollarsToMinor(config.customerDailyLimit),
-      dollarsToMinor(config.merchantDailyLimit),
+      toMinor(currencyPolicy.customerDailyLimit, record.action.currency),
+      toMinor(currencyPolicy.merchantDailyLimit, record.action.currency),
     );
     if (record.approvalId) {
       const consumed = this.approvals.validateAndConsume(

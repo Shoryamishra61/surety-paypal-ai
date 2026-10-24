@@ -1,8 +1,9 @@
 // ============================================================
 // SURETY — Policy Engine
 // Runs AFTER premise verification, not instead of it.
-// Enforces financial limits, approval requirements, and
-// remaining refundable amount validation.
+// Enforces per-currency financial limits, approval requirements,
+// and remaining refundable amount validation in exact minor
+// units.
 // ============================================================
 
 import {
@@ -13,16 +14,22 @@ import {
   VerificationResult,
   PremiseVerdict,
 } from './types';
+import { minorExponent, toMinor } from './money';
+
+/** Caps and daily limits are set per currency by the merchant. */
+export interface CurrencyPolicy {
+  currency: string;
+  /** Maximum amount an agent can refund autonomously per transaction */
+  maxAutonomousRefundAmount: number;
+  /** Maximum refund amount per customer per day in this currency */
+  customerDailyLimit: number;
+  /** Maximum refund amount per merchant per day in this currency */
+  merchantDailyLimit: number;
+}
 
 export interface PolicyConfig {
-  /** Maximum amount an agent can refund autonomously (per transaction) */
-  maxAutonomousRefundAmount: number;
-  /** Maximum refund amount per customer per day */
-  customerDailyLimit: number;
-  /** Maximum refund amount per merchant per day */
-  merchantDailyLimit: number;
-  /** Currency the policy applies to */
-  currency: string;
+  /** One entry per currency the merchant accepts agent refunds in */
+  currencies: CurrencyPolicy[];
   /** Whether human approval is always required regardless of verification */
   alwaysRequireApproval: boolean;
   /** Allowed action types */
@@ -32,27 +39,52 @@ export interface PolicyConfig {
 }
 
 export const DEFAULT_POLICY: PolicyConfig = {
-  maxAutonomousRefundAmount: 50.0,
-  customerDailyLimit: 200.0,
-  merchantDailyLimit: 5000.0,
-  currency: 'USD',
+  currencies: [
+    {
+      currency: 'USD',
+      maxAutonomousRefundAmount: 50,
+      customerDailyLimit: 200,
+      merchantDailyLimit: 5000,
+    },
+    {
+      currency: 'EUR',
+      maxAutonomousRefundAmount: 50,
+      customerDailyLimit: 200,
+      merchantDailyLimit: 5000,
+    },
+    {
+      currency: 'GBP',
+      maxAutonomousRefundAmount: 40,
+      customerDailyLimit: 150,
+      merchantDailyLimit: 4000,
+    },
+    {
+      currency: 'JPY',
+      maxAutonomousRefundAmount: 7500,
+      customerDailyLimit: 30000,
+      merchantDailyLimit: 700000,
+    },
+  ],
   alwaysRequireApproval: false,
   allowedActionTypes: [ActionType.REFUND, ActionType.PARTIAL_REFUND],
-  version: '1.0.0',
+  version: '2.0.0',
 };
 
+/** Financial history in exact minor units of one currency. */
 export interface RefundHistory {
   captureId: string;
-  totalRefunded: number;
-  captureAmount: number;
   currency: string;
+  captureAmountMinor: number;
+  totalRefundedMinor: number;
 }
 
+/** Daily usage in exact minor units of one currency. */
 export interface DailyUsage {
   customerId: string;
   merchantId: string;
-  customerDailyTotal: number;
-  merchantDailyTotal: number;
+  currency: string;
+  customerDailyMinor: number;
+  merchantDailyMinor: number;
 }
 
 /**
@@ -70,13 +102,17 @@ export class PolicyEngine {
     this.config = config;
   }
 
+  policyFor(currency: string): CurrencyPolicy | undefined {
+    return this.config.currencies.find((c) => c.currency === currency);
+  }
+
   /**
    * Evaluate policy constraints against a verified action.
    *
    * @param action - The proposed financial action
    * @param verification - The premise verification result
-   * @param refundHistory - Prior refund history for the capture
-   * @param dailyUsage - Daily usage counters
+   * @param refundHistory - Prior refund history for the capture (minor units)
+   * @param dailyUsage - Daily usage counters (minor units)
    * @returns Policy evaluation result
    */
   evaluate(
@@ -89,6 +125,9 @@ export class PolicyEngine {
     const reasonCodes: string[] = [];
     let requiresApproval = this.config.alwaysRequireApproval;
     let remainingRefundable = 0;
+    let maxAutonomousAmount = 0;
+    const currencyPolicy = this.policyFor(action.currency);
+
     if (
       verification.decision === ExecutionDecision.DENY ||
       verification.verdict === PremiseVerdict.CONTRADICTED ||
@@ -101,9 +140,9 @@ export class PolicyEngine {
       !refundHistory ||
       refundHistory.captureId !== action.captureId ||
       refundHistory.currency !== action.currency ||
-      !Number.isFinite(refundHistory.captureAmount) ||
-      !Number.isFinite(refundHistory.totalRefunded) ||
-      refundHistory.totalRefunded < 0
+      !Number.isSafeInteger(refundHistory.captureAmountMinor) ||
+      !Number.isSafeInteger(refundHistory.totalRefundedMinor) ||
+      refundHistory.totalRefundedMinor < 0
     ) {
       violations.push('Missing or invalid financial history');
       reasonCodes.push('INVALID_FINANCIAL_HISTORY');
@@ -119,36 +158,34 @@ export class PolicyEngine {
       reasonCodes.push('ACTION_TYPE_NOT_ALLOWED');
     }
 
-    // ── 2. Currency consistency ──────────────────────────────
-    if (action.currency !== this.config.currency) {
-      violations.push(
-        `Currency mismatch: action is ${action.currency}, policy is ${this.config.currency}`,
-      );
-      reasonCodes.push('CURRENCY_MISMATCH');
+    // ── 2. Currency permitted, amount exact in minor units ───
+    let amountMinor = 0;
+    if (!currencyPolicy) {
+      violations.push(`Currency ${action.currency} is not permitted by policy`);
+      reasonCodes.push('CURRENCY_NOT_ALLOWED');
+    } else {
+      maxAutonomousAmount = currencyPolicy.maxAutonomousRefundAmount;
+      try {
+        amountMinor = toMinor(action.amount, action.currency);
+        if (amountMinor <= 0) throw new Error('non-positive');
+      } catch {
+        violations.push('Refund amount must be positive and exact to the currency exponent');
+        reasonCodes.push('INVALID_AMOUNT');
+      }
     }
 
-    // ── 3. Amount positive and valid ─────────────────────────
-    if (
-      !Number.isFinite(action.amount) ||
-      action.amount <= 0 ||
-      !Number.isSafeInteger(Math.round(action.amount * 100)) ||
-      Math.abs(action.amount * 100 - Math.round(action.amount * 100)) > 1e-7
-    ) {
-      violations.push('Refund amount must be positive');
-      reasonCodes.push('INVALID_AMOUNT');
-    }
-
-    // ── 4. Remaining refundable amount ───────────────────────
-    if (refundHistory) {
+    // ── 3. Remaining refundable amount ───────────────────────
+    if (refundHistory && currencyPolicy) {
       remainingRefundable =
-        (Math.round(refundHistory.captureAmount * 100) -
-          Math.round(refundHistory.totalRefunded * 100)) /
-        100;
-
-      if (remainingRefundable <= 0) {
+        (refundHistory.captureAmountMinor - refundHistory.totalRefundedMinor) /
+        10 ** minorExponent(action.currency);
+      if (refundHistory.captureAmountMinor - refundHistory.totalRefundedMinor <= 0) {
         violations.push('Capture has already been fully refunded');
         reasonCodes.push('FULLY_REFUNDED');
-      } else if (action.amount > remainingRefundable) {
+      } else if (
+        amountMinor >
+        refundHistory.captureAmountMinor - refundHistory.totalRefundedMinor
+      ) {
         violations.push(
           `Refund amount ${action.amount} exceeds remaining refundable balance ${remainingRefundable}`,
         );
@@ -156,29 +193,31 @@ export class PolicyEngine {
       }
     }
 
-    // ── 5. Autonomous amount limit ───────────────────────────
-    if (action.amount > this.config.maxAutonomousRefundAmount) {
+    // ── 4. Autonomous amount limit ───────────────────────────
+    if (
+      currencyPolicy &&
+      amountMinor > 0 &&
+      action.amount > currencyPolicy.maxAutonomousRefundAmount
+    ) {
       requiresApproval = true;
       reasonCodes.push('EXCEEDS_AUTONOMOUS_LIMIT');
     }
 
-    // ── 6. Customer daily limit ──────────────────────────────
-    if (dailyUsage) {
-      const projectedCustomerDaily = dailyUsage.customerDailyTotal + action.amount;
-      if (projectedCustomerDaily > this.config.customerDailyLimit) {
+    // ── 5. Daily limits (per customer and merchant, per currency)
+    if (dailyUsage && currencyPolicy) {
+      const customerLimitMinor = toMinor(currencyPolicy.customerDailyLimit, action.currency);
+      const merchantLimitMinor = toMinor(currencyPolicy.merchantDailyLimit, action.currency);
+      if (dailyUsage.customerDailyMinor + amountMinor > customerLimitMinor) {
         requiresApproval = true;
         reasonCodes.push('EXCEEDS_CUSTOMER_DAILY_LIMIT');
       }
-
-      // ── 7. Merchant daily limit ────────────────────────────
-      const projectedMerchantDaily = dailyUsage.merchantDailyTotal + action.amount;
-      if (projectedMerchantDaily > this.config.merchantDailyLimit) {
+      if (dailyUsage.merchantDailyMinor + amountMinor > merchantLimitMinor) {
         requiresApproval = true;
         reasonCodes.push('EXCEEDS_MERCHANT_DAILY_LIMIT');
       }
     }
 
-    // ── 8. Verification-based approval requirement ───────────
+    // ── 6. Verification-based approval requirement ───────────
     if (verification.decision === ExecutionDecision.REVIEW) {
       requiresApproval = true;
       reasonCodes.push('VERIFICATION_REQUIRES_REVIEW');
@@ -191,7 +230,7 @@ export class PolicyEngine {
       permitted,
       requiresApproval: permitted ? requiresApproval : false,
       reasonCodes,
-      maxAutonomousAmount: this.config.maxAutonomousRefundAmount,
+      maxAutonomousAmount,
       remainingRefundable,
       policyVersion: this.config.version,
       violations,
@@ -200,7 +239,7 @@ export class PolicyEngine {
 
   /** Get current policy config */
   getConfig(): PolicyConfig {
-    return { ...this.config };
+    return structuredClone(this.config);
   }
 
   /** Update policy config */
