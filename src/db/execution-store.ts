@@ -58,8 +58,7 @@ export class ExecutionStore {
   }
   getReservation(logicalId: string): Reservation | undefined {
     return this.db.prepare('SELECT * FROM reservations WHERE logicalId=?').get(logicalId) as
-      | Reservation
-      | undefined;
+      Reservation | undefined;
   }
   reserve(
     record: Reservation,
