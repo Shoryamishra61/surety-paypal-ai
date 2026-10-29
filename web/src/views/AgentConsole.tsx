@@ -84,6 +84,7 @@ export default function AgentConsole() {
   const [events, setEvents] = useState<SuretyEventWire[]>([]);
   const [summary, setSummary] = useState<AgentRunSummary | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     api<InboxMessageView[]>('/api/agent/inbox')
@@ -99,6 +100,12 @@ export default function AgentConsole() {
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight });
   }, [events]);
+
+  // Bring the verdicts to the user once they land: scroll the run summary
+  // to the top of the viewport after React renders it.
+  useEffect(() => {
+    if (summary) summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [summary]);
 
   const aiLive = config?.aiConfigured === true;
 
@@ -213,7 +220,7 @@ export default function AgentConsole() {
             </button>
           </div>
           {totals && (
-            <p className="run-summary" role="status">
+            <p className="run-summary" role="status" ref={summaryRef}>
               <strong className="num">{totals.messages}</strong> messages —{' '}
               {totals.refunded > 0 && (
                 <>

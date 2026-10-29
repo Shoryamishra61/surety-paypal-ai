@@ -70,11 +70,7 @@ export default function PolicyStudio() {
           }}
         >
           {config.currencies.map((entry, index) => (
-            <fieldset
-              key={entry.currency}
-              className="currency-block"
-              style={{ border: 0, padding: 0, margin: 0 }}
-            >
+            <fieldset key={entry.currency} className="currency-block">
               <h3>{entry.currency}</h3>
               <div className="currency-fields">
                 <label className="field">

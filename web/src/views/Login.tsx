@@ -30,9 +30,14 @@ export default function Login({ onSignedIn }: { onSignedIn: (role: string) => vo
       <div className="login-card">
         <p className="eyebrow">Surety demo</p>
         <h1>Sign in</h1>
-        <p className="lede">This hosted demo is gated by role. Pick a role and use its password below.</p>
+        <p className="lede">
+          This hosted demo is gated by role. Pick a role and use its password below.
+        </p>
         <form onSubmit={submit}>
-          <fieldset className="login-roles" style={{ border: 0, padding: 0, margin: '0 0 var(--s4)' }}>
+          <fieldset
+            className="login-roles"
+            style={{ border: 0, padding: 0, margin: '0 0 var(--s4)' }}
+          >
             <div className="login-role-row">
               <label className="form-check-inline">
                 <input
@@ -70,7 +75,11 @@ export default function Login({ onSignedIn }: { onSignedIn: (role: string) => vo
             </p>
           )}
           <div className="run-controls">
-            <button className="btn btn-primary" type="submit" disabled={busy || password.length === 0}>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={busy || password.length === 0}
+            >
               {busy ? 'Signing in…' : 'Sign in'}
             </button>
           </div>

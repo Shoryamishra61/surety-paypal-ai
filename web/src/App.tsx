@@ -54,8 +54,7 @@ export default function App() {
       });
   }, [config]);
 
-  const gated =
-    config !== null && config.hosted && sessionChecked && session === null;
+  const gated = config !== null && config.hosted && sessionChecked && session === null;
 
   return (
     <ConfigContext.Provider value={config}>
@@ -95,60 +94,60 @@ export default function App() {
           />
         </main>
       ) : (
-      <div className="shell">
-        <nav className="rail" aria-label="Sections">
-          <ul>
-            {NAV.map((item) => (
-              <li key={item.route}>
-                <a
-                  href={`#${item.route}`}
-                  className={route === item.route ? 'rail-link is-active' : 'rail-link'}
-                  aria-current={route === item.route ? 'page' : undefined}
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <main id="main" tabIndex={-1} className="view">
-          {route === '/' && (
-            <section className="view-arrive">
-              <AgentConsole />
-            </section>
-          )}
-          {route === '/cases' && (
-            <section className="view-arrive">
-              <CaseInbox />
-            </section>
-          )}
-          {route.startsWith('/cases/') && (
-            <section className="view-arrive">
-              <CaseDetail caseId={route.slice('/cases/'.length)} />
-            </section>
-          )}
-          {route === '/review' && (
-            <section className="view-arrive">
-              <ReviewQueue />
-            </section>
-          )}
-          {route === '/policy' && (
-            <section className="view-arrive">
-              <PolicyStudio />
-            </section>
-          )}
-          {route === '/analytics' && (
-            <section className="view-arrive">
-              <Analytics />
-            </section>
-          )}
-          {route === '/events' && (
-            <section className="view-arrive">
-              <EventLog />
-            </section>
-          )}
-        </main>
-      </div>
+        <div className="shell">
+          <nav className="rail" aria-label="Sections">
+            <ul>
+              {NAV.map((item) => (
+                <li key={item.route}>
+                  <a
+                    href={`#${item.route}`}
+                    className={route === item.route ? 'rail-link is-active' : 'rail-link'}
+                    aria-current={route === item.route ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <main id="main" tabIndex={-1} className="view">
+            {route === '/' && (
+              <section className="view-arrive">
+                <AgentConsole />
+              </section>
+            )}
+            {route === '/cases' && (
+              <section className="view-arrive">
+                <CaseInbox />
+              </section>
+            )}
+            {route.startsWith('/cases/') && (
+              <section className="view-arrive">
+                <CaseDetail caseId={route.slice('/cases/'.length)} />
+              </section>
+            )}
+            {route === '/review' && (
+              <section className="view-arrive">
+                <ReviewQueue />
+              </section>
+            )}
+            {route === '/policy' && (
+              <section className="view-arrive">
+                <PolicyStudio />
+              </section>
+            )}
+            {route === '/analytics' && (
+              <section className="view-arrive">
+                <Analytics />
+              </section>
+            )}
+            {route === '/events' && (
+              <section className="view-arrive">
+                <EventLog />
+              </section>
+            )}
+          </main>
+        </div>
       )}
       <footer className="colophon">
         <p>

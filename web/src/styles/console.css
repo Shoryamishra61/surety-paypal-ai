@@ -196,6 +196,13 @@
   margin: var(--s2) 0 0;
 }
 
+/* Compact ledger stacks rows vertically; the base ledger's two-column
+   grid must not apply here or the divs alternate columns and values
+   collapse into one-word lines. */
+dl.ledger.compact {
+  display: block;
+}
+
 dl.ledger.compact > div {
   display: grid;
   grid-template-columns: minmax(6rem, 9rem) minmax(0, 1fr);
@@ -252,6 +259,11 @@ dl.ledger.compact dd {
 
 .trace-detail {
   color: var(--ink-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.trace-label {
   min-width: 0;
 }
 
@@ -383,6 +395,13 @@ dl.ledger.compact dd {
   border-top: 2px solid var(--ink);
 }
 
+/* Compact verdict pills inside the grid rows. */
+.grid-shell .pill {
+  font-size: 0.75rem;
+  padding: 0 0.55rem;
+  gap: 5px;
+}
+
 /* ── Analytics ─────────────────────────────────────────────── */
 
 .stat-ledger {
@@ -453,22 +472,35 @@ dl.ledger.compact dd {
 /* ── Policy studio ─────────────────────────────────────────── */
 
 .policy-form {
-  max-width: 40rem;
+  max-width: 52rem;
 }
 
 .currency-block {
-  padding: var(--s4) 0;
-  border-bottom: 1px solid var(--rule);
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--s6);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--s4);
+}
+
+.currency-block:first-of-type {
+  border-top: 2px solid var(--ink);
 }
 
 .currency-block h3 {
-  margin-bottom: var(--s3);
+  margin: 0 0 var(--s4);
+  font-family: var(--serif);
 }
 
 .currency-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--s3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s4);
+}
+
+/* Equal label heights keep the three inputs on one baseline. */
+.currency-fields label.field > span {
+  min-height: 2.6rem;
 }
 
 .policy-actions {

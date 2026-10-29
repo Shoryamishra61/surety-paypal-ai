@@ -14,19 +14,29 @@ interface TimelineEntry {
 }
 
 function timelineOf(record: CaseRecord): TimelineEntry[] {
-  const entries: TimelineEntry[] = [
-    { label: 'Proposal received', at: record.createdAt },
-  ];
+  const entries: TimelineEntry[] = [{ label: 'Proposal received', at: record.createdAt }];
   const approval = record.approvalLifecycle;
   if (approval) {
-    entries.push({ label: `Reviewer approved (${approval.approvedBy ?? 'reviewer'})`, at: approval.createdAt });
+    entries.push({
+      label: `Reviewer approved (${approval.approvedBy ?? 'reviewer'})`,
+      at: approval.createdAt,
+    });
   }
   if (record.executionState === 'SUCCEEDED' && record.refundId)
-    entries.push({ label: `Refund executed · ${record.refundId}`, at: record.updatedAt ?? record.createdAt });
+    entries.push({
+      label: `Refund executed · ${record.refundId}`,
+      at: record.updatedAt ?? record.createdAt,
+    });
   else if (record.executionState === 'PENDING')
-    entries.push({ label: 'PayPal outcome pending — reconcile before retry', at: record.updatedAt ?? record.createdAt });
+    entries.push({
+      label: 'PayPal outcome pending — reconcile before retry',
+      at: record.updatedAt ?? record.createdAt,
+    });
   else if (record.decision === 'DENY')
-    entries.push({ label: 'Blocked by evidence — no payment call made', at: record.updatedAt ?? record.createdAt });
+    entries.push({
+      label: 'Blocked by evidence — no payment call made',
+      at: record.updatedAt ?? record.createdAt,
+    });
   else if (record.decision === 'REVIEW' && !approval)
     entries.push({ label: 'Waiting for a reviewer', at: record.updatedAt ?? record.createdAt });
   return entries;
