@@ -90,6 +90,10 @@ export class GeminiProvider implements LLMProvider {
             temperature: 0,
             responseMimeType: 'application/json',
             responseSchema: toGeminiSchema(jsonSchemaFor(call.schema)),
+            // Thinking is disabled: this adapter runs one narrow,
+            // schema-bound step, and 3.x thinking adds latency without
+            // changing a verdict that is made deterministically later.
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       },
@@ -167,7 +171,7 @@ export function createLLMProvider(env: NodeJS.ProcessEnv = process.env): LLMProv
           : null);
   if (!wanted) return null;
   if (wanted === 'gemini' && env.GEMINI_API_KEY)
-    return new GeminiProvider(model || env.GEMINI_MODEL || 'gemini-2.0-flash', env.GEMINI_API_KEY);
+    return new GeminiProvider(model || env.GEMINI_MODEL || 'gemini-3.5-flash', env.GEMINI_API_KEY);
   if (wanted === 'groq' && env.GROQ_API_KEY)
     return new GroqProvider(model || env.GROQ_MODEL || 'llama-3.3-70b-versatile', env.GROQ_API_KEY);
   if (wanted === 'openai' && env.OPENAI_API_KEY && (model || env.OPENAI_MODEL))

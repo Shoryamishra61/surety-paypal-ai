@@ -67,7 +67,7 @@ it('gemini provider sends native response schema and fails closed on malformed J
     );
   };
   await expect(
-    new GeminiProvider('gemini-2.0-flash', 'key', request).structured({
+    new GeminiProvider('gemini-3.5-flash', 'key', request).structured({
       system: 's',
       user: 'u',
       schema,
