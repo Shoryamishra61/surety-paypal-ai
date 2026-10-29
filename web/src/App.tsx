@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { loadConfig } from './lib/api';
+import { fetchSession, loadConfig } from './lib/api';
 import type { SuretyConfig } from './lib/api';
 import { ConfigContext } from './lib/config';
 import { useRoute } from './lib/route';
 import AgentConsole from './views/AgentConsole';
+import Login from './views/Login';
 import CaseInbox from './views/CaseInbox';
 import CaseDetail from './views/CaseDetail';
 import ReviewQueue from './views/ReviewQueue';
@@ -28,12 +29,33 @@ export default function App() {
   const route = useRoute();
   const [config, setConfig] = useState<SuretyConfig | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [session, setSession] = useState<string | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     loadConfig()
       .then(setConfig)
       .catch((e: Error) => setConfigError(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!config?.hosted) {
+      setSessionChecked(true);
+      return;
+    }
+    fetchSession()
+      .then((s) => {
+        setSession(s?.role ?? null);
+        setSessionChecked(true);
+      })
+      .catch(() => {
+        setSession(null);
+        setSessionChecked(true);
+      });
+  }, [config]);
+
+  const gated =
+    config !== null && config.hosted && sessionChecked && session === null;
 
   return (
     <ConfigContext.Provider value={config}>
@@ -63,6 +85,16 @@ export default function App() {
           </div>
         </div>
       </header>
+      {gated ? (
+        <main id="main" className="view" style={{ maxWidth: '30rem', margin: '0 auto' }}>
+          <Login
+            onSignedIn={(role) => {
+              setSession(role);
+              window.location.reload();
+            }}
+          />
+        </main>
+      ) : (
       <div className="shell">
         <nav className="rail" aria-label="Sections">
           <ul>
@@ -117,6 +149,7 @@ export default function App() {
           )}
         </main>
       </div>
+      )}
       <footer className="colophon">
         <p>
           Merchant-reported delivery is evidence, not independent proof. Built for the PayPal AI

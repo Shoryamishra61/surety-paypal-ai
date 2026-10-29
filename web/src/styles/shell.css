@@ -104,6 +104,15 @@
     grid-template-columns: 1fr;
     gap: 0;
   }
+  /* Grid children must be allowed to shrink, or the rail's
+     horizontal scroll never engages and the page overflows. */
+  .shell > nav,
+  .shell > main {
+    min-width: 0;
+  }
+  .panel-head {
+    flex-wrap: wrap;
+  }
   .rail ul {
     position: static;
     flex-direction: row;

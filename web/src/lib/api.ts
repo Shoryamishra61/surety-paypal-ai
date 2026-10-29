@@ -29,6 +29,17 @@ export async function loadConfig(): Promise<SuretyConfig> {
   return config;
 }
 
+/** Sign in as one of the hosted-demo roles; sets the session cookie. */
+export async function login(role: 'operator' | 'reviewer', password: string): Promise<void> {
+  await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ role, password }) });
+}
+
+export async function fetchSession(): Promise<{ role: string; expiresAt: number } | null> {
+  const response = await fetch('/api/auth/session', { credentials: 'same-origin' });
+  if (!response.ok) return null;
+  return (await response.json()) as { role: string; expiresAt: number };
+}
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const method = init.method ?? 'GET';
   const headers = new Headers(init.headers);

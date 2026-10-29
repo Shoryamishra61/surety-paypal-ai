@@ -53,6 +53,13 @@ export interface CaseRecord {
   updatedAt?: string;
   error: string | null;
   mode: string;
+  approvalLifecycle?: {
+    approvalId: string;
+    createdAt: string;
+    consumedAt: string | null;
+    approvedBy: string | null;
+    status: string;
+  } | null;
 }
 
 export interface EvidenceRecord {

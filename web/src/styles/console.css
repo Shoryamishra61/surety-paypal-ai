@@ -506,3 +506,100 @@ dl.ledger.compact dd {
   padding: var(--s2) var(--s3) var(--s2) 0;
   vertical-align: top;
 }
+
+/* ── Hosted login ─────────────────────────────────────────── */
+
+.login-wrap {
+  padding-top: var(--s7);
+}
+
+.login-card {
+  border-top: 2px solid var(--ink);
+  padding-top: var(--s4);
+}
+
+.login-card h1 {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+}
+
+.login-card .lede {
+  margin: var(--s3) 0 var(--s5);
+}
+
+.login-role-row {
+  display: flex;
+  gap: var(--s5);
+}
+
+.login-role-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 0.9375rem;
+}
+
+.login-role-row input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--ink);
+}
+
+.login-demo-creds {
+  margin-top: var(--s5);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--s3);
+}
+
+/* ── Case timeline ────────────────────────────────────────── */
+
+.timeline {
+  list-style: none;
+  margin: var(--s3) 0 0;
+  padding: 0;
+}
+
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--s3);
+  padding: var(--s2) 0 var(--s2) var(--s4);
+  border-left: 1px solid var(--rule);
+  align-items: baseline;
+}
+
+.timeline li:last-child {
+  border-left-color: transparent;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -4.5px;
+  top: 0.95rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.timeline-label {
+  font-size: 0.875rem;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.timeline-time {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .timeline li {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+  .timeline-time {
+    justify-self: start;
+  }
+}

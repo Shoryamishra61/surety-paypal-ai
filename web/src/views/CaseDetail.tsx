@@ -8,6 +8,30 @@ import { CLAIM_LABELS, decisionMeta, formatDateTime, formatMoney } from '../lib/
 import type { CaseRecord } from '../lib/types';
 import { ErrorLine, Loading, Pill, SectionHeading } from '../components/ui';
 
+interface TimelineEntry {
+  label: string;
+  at: string;
+}
+
+function timelineOf(record: CaseRecord): TimelineEntry[] {
+  const entries: TimelineEntry[] = [
+    { label: 'Proposal received', at: record.createdAt },
+  ];
+  const approval = record.approvalLifecycle;
+  if (approval) {
+    entries.push({ label: `Reviewer approved (${approval.approvedBy ?? 'reviewer'})`, at: approval.createdAt });
+  }
+  if (record.executionState === 'SUCCEEDED' && record.refundId)
+    entries.push({ label: `Refund executed · ${record.refundId}`, at: record.updatedAt ?? record.createdAt });
+  else if (record.executionState === 'PENDING')
+    entries.push({ label: 'PayPal outcome pending — reconcile before retry', at: record.updatedAt ?? record.createdAt });
+  else if (record.decision === 'DENY')
+    entries.push({ label: 'Blocked by evidence — no payment call made', at: record.updatedAt ?? record.createdAt });
+  else if (record.decision === 'REVIEW' && !approval)
+    entries.push({ label: 'Waiting for a reviewer', at: record.updatedAt ?? record.createdAt });
+  return entries;
+}
+
 export default function CaseDetail({ caseId }: { caseId: string }) {
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +201,16 @@ export default function CaseDetail({ caseId }: { caseId: string }) {
               </dd>
             </div>
           </dl>
+          <h3 style={{ marginTop: 'var(--s5)' }}>Timeline</h3>
+          <ol className="timeline">
+            {timelineOf(record).map((entry) => (
+              <li key={entry.label}>
+                <span className="timeline-dot" aria-hidden="true" />
+                <span className="timeline-label">{entry.label}</span>
+                <span className="timeline-time num">{formatDateTime(entry.at)}</span>
+              </li>
+            ))}
+          </ol>
           <div className="policy-actions">
             <a className="btn" href={`/api/cases/${record.caseId}/export`}>
               Download FactPack
