@@ -192,6 +192,10 @@ it('SSE bus carries the full agent trace and summarize() computes the demo numbe
 });
 
 it('HTTP surface: inbox listing, agent run, persisted event log', async () => {
+  // Hermetic: pin the deterministic brain regardless of developer .env.
+  const llmKeys = ['GEMINI_API_KEY', 'GROQ_API_KEY', 'OPENAI_API_KEY', 'LLM_PROVIDER'];
+  const savedLlmEnv = llmKeys.map((key) => [key, process.env[key]] as const);
+  for (const [key] of savedLlmEnv) delete process.env[key];
   const { runtime, directory } = setup();
   const server = runtime.app.listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
@@ -219,6 +223,10 @@ it('HTTP surface: inbox listing, agent run, persisted event log', async () => {
     }[];
     expect(events.some((e) => e.event_type === 'gateway.case.executed')).toBe(true);
   } finally {
+    for (const [key, value] of savedLlmEnv) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
     await new Promise<void>((resolve) => server.close(() => resolve()));
     runtime.close();
     rmSync(directory, { recursive: true, force: true });
