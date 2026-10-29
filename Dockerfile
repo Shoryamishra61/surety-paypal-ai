@@ -23,6 +23,5 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/web/dist ./web/dist
-COPY --from=build /app/public ./public
 EXPOSE 10000
 CMD ["node", "dist/server.js"]
