@@ -62,3 +62,5 @@ Dispute acceptance flows, carrier-grade tracking, multi-tenant policy isolation,
 **Disclosure:** AI coding assistance was used to implement and review this project.
 
 **Links:** Repository: (public GitHub URL) · Video: (YouTube URL) · Hosted demo: (Render URL)
+
+> Hosted-demo note: the free-tier service sleeps after ~15 minutes idle; the first load takes about a minute to wake. Live AI runs on Gemini 3.5 Flash (see artifacts/live-llm-verification.json).
